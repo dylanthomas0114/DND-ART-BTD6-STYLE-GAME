@@ -38,6 +38,16 @@ export interface MapDef {
   theme: MapTheme;
 }
 
+/** Dragon's Pass: both entry roads merge into this shared road. */
+const PASS_SHARED = [
+  { x: 1040, y: 560 },
+  { x: 1180, y: 690 },
+  { x: 1340, y: 650 },
+  { x: 1420, y: 480 },
+  { x: 1520, y: 380 },
+  { x: 1680, y: 400 },
+];
+
 export const MAPS: Record<MapId, MapDef> = {
   glade: {
     id: 'glade',
@@ -133,39 +143,39 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   pass: {
     id: 'pass',
-    name: 'Dragon’s Pass',
+    name: 'Dragon\u2019s Pass',
     tier: 'Advanced',
-    blurb: 'Two short roads through scorched mountains. Little time to react.',
+    blurb: 'Two roads through scorched mountains that join into one. Little time to react.',
     roadWidth: 44,
     paths: [
       [
-        { x: -60, y: 250 },
-        { x: 300, y: 240 },
-        { x: 520, y: 330 },
-        { x: 720, y: 300 },
-        { x: 900, y: 180 },
-        { x: 1100, y: 220 },
-        { x: 1300, y: 380 },
-        { x: 1680, y: 410 },
+        { x: -60, y: 230 },
+        { x: 200, y: 240 },
+        { x: 330, y: 120 },
+        { x: 520, y: 110 },
+        { x: 600, y: 250 },
+        { x: 780, y: 330 },
+        { x: 900, y: 450 },
+        ...PASS_SHARED,
       ],
       [
-        { x: -60, y: 680 },
-        { x: 280, y: 690 },
-        { x: 500, y: 590 },
-        { x: 740, y: 620 },
-        { x: 920, y: 740 },
-        { x: 1120, y: 700 },
-        { x: 1320, y: 540 },
-        { x: 1680, y: 520 },
+        { x: -60, y: 670 },
+        { x: 200, y: 660 },
+        { x: 330, y: 780 },
+        { x: 520, y: 790 },
+        { x: 600, y: 650 },
+        { x: 780, y: 570 },
+        { x: 900, y: 450 },
+        ...PASS_SHARED,
       ],
     ],
     water: [],
     blockers: [
-      { x: 640, y: 460, r: 40 },
-      { x: 1180, y: 470, r: 36 },
-      { x: 200, y: 470, r: 30 },
-      { x: 1480, y: 140, r: 34 },
-      { x: 1480, y: 800, r: 34 },
+      { x: 120, y: 450, r: 34 },
+      { x: 430, y: 450, r: 30 },
+      { x: 700, y: 450, r: 34 },
+      { x: 1560, y: 430, r: 34 },
+      { x: 1180, y: 860, r: 30 },
     ],
     theme: {
       ground: [0xa0764a, 0x6b4a33],

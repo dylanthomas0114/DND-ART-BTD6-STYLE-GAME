@@ -41,7 +41,7 @@ export const druid: TowerDef = {
   look: 'druid',
   slots: ['ground', 'back', 'companion', 'body', 'head', 'offHand', 'mainHand'],
   baseGear: [gear('mainHand', 'staff_gnarled')],
-  base: stats({ range: 105, attacks: [chill] }),
+  base: stats({ range: 116, attacks: [chill] }),
   paths: [
     {
       name: 'Permafrost',

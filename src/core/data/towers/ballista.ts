@@ -40,7 +40,7 @@ export const ballista: TowerDef = {
   look: 'ballista',
   slots: ['ground', 'flag', 'ammo', 'frame', 'crew', 'bolt'],
   baseGear: [gear('bolt', 'bolt_wood')],
-  base: stats({ range: 120, attacks: [bolt] }),
+  base: stats({ range: 132, attacks: [bolt] }),
   paths: [
     {
       name: 'Heavy Bolts',

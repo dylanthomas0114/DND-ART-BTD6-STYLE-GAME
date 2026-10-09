@@ -3,6 +3,7 @@ import { Game } from '../../src/core/game';
 import { DT } from '../../src/core/types';
 import { rbe } from '../../src/core/data/enemies';
 import { place } from '../helpers';
+import { BALANCE } from '../../src/core/data/balance';
 
 function run(g: Game, seconds: number) {
   const n = Math.round(seconds / DT);
@@ -62,7 +63,7 @@ describe('combat', () => {
     expect(e.alive).toBe(false);
     const child = g.enemies.find((x) => x.alive && x.uid !== e.uid);
     expect(child?.type).toBe('green');
-    expect(g.cash - cashBefore).toBe(2);
+    expect(g.cash - cashBefore).toBeCloseTo(2 * BALANCE.popCashScale, 5);
   });
 
   it('immune enemies take no damage', () => {
@@ -96,7 +97,10 @@ describe('combat', () => {
     expect(g.lives).toBe(lives);
     expect(g.round).toBe(1);
     expect(g.roundActive).toBe(false);
-    expect(g.cash).toBe(cash + 20 + 101);
+    expect(g.cash).toBeCloseTo(
+      cash + 20 * BALANCE.popCashScale + BALANCE.roundBonusBase + BALANCE.roundBonusPerRound,
+      5,
+    );
   });
 });
 
@@ -207,7 +211,7 @@ describe('abilities', () => {
     const cash = g.cash;
     run(g, 0);
     runRound(g);
-    expect(g.cash).toBeGreaterThanOrEqual(cash + 101 + 80);
+    expect(g.cash).toBeGreaterThanOrEqual(cash + BALANCE.roundBonusBase + 80);
   });
 });
 

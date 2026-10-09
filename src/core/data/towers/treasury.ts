@@ -13,7 +13,7 @@ export const treasury: TowerDef = {
   look: 'treasury',
   slots: ['ground', 'cart', 'stall', 'vault', 'roof', 'guard', 'sign'],
   baseGear: [gear('vault', 'vault_wood')],
-  base: stats({ range: 60, attacks: [], income: { perRound: 80, lives: 0, interest: 0, interestCap: 0 } }),
+  base: stats({ range: 66, attacks: [], income: { perRound: 80, lives: 0, interest: 0, interestCap: 0 } }),
   paths: [
     {
       name: 'Vault',

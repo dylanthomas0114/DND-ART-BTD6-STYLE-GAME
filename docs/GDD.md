@@ -60,3 +60,14 @@ Every upgrade equips new gear on the character. Paths own disjoint slots (e.g. F
 - Goblin Glade (beginner)
 - Sunken Crypt (intermediate, water)
 - Dragon's Pass (advanced, two roads)
+
+## Balance (M4)
+- **Global knobs** live in `src/core/data/balance.ts`: attack rate scale, damage scale, round bonus (120 + 2 × round), pop-cash scale (×1.25), and pierce scaling at tier 4/5 (×1.3 / ×1.6), which gives late tiers a crowd-clearing power spike.
+- **Speeds**: base slime speed is 85 units/s. The fastest slimes (Violet 2.5×, Crimson 2.8×, Warded 2.5×) are compressed relative to BTD6, so they stay readable on a phone. Projectiles lead their targets.
+- **True Sight**: the Cleric sees invisible foes from tier 0. Radiant damage permanently strips magical invisibility (the innately invisible Lich Wraith excepted). The HUD warns when a round contains invisible foes and you have no True Sight.
+- **Composed rounds (41+)** are built from 3–6 themed groups. Fairness rules: modifiers ramp in gradually; before round 60 there is at most one invisible group, and never invisible + regenerating high-tier oozes; groups in the same round don't share immunities.
+- **Bot-verified difficulty** (`npm run sim:balance`):
+  - A lazy build loses before round 35 on every map.
+  - A sensible build wins Easy everywhere.
+  - An optimised build wins Medium and Hard on every map.
+  - A fixed plan that hoards gold falls short on Hard.

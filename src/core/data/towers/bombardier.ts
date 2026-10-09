@@ -46,7 +46,7 @@ export const bombardier: TowerDef = {
   look: 'dwarf',
   slots: ['ground', 'back', 'body', 'head', 'offHand', 'mainHand'],
   baseGear: [gear('mainHand', 'cannon_hand')],
-  base: stats({ range: 150, attacks: [bomb] }),
+  base: stats({ range: 165, attacks: [bomb] }),
   paths: [
     {
       name: 'Big Bombs',

@@ -1,3 +1,4 @@
+import { BALANCE } from './data/balance';
 import type { AttackStats, GearDef, Mod, Op, TowerDef, TowerStats, Tiers } from './data/towerTypes';
 
 export const MAX_TIER = 5;
@@ -127,6 +128,16 @@ export function computeStats(def: TowerDef, tiers: Tiers): TowerStats {
     for (let t = 0; t < tiers[p]!; t++) {
       const u = def.paths[p]!.upgrades[t]!;
       for (const m of u.mods) applyMod(s, m, `${def.id} ${p + 1}-${t + 1}`);
+    }
+  }
+  const top = Math.max(tiers[0], tiers[1], tiers[2]);
+  const ps = BALANCE.tierPierceScale[top] ?? 1;
+  for (const a of s.attacks) {
+    a.rate *= BALANCE.rateScale;
+    a.damage *= BALANCE.damageScale;
+    if (ps !== 1) {
+      a.pierce = Math.round(a.pierce * ps);
+      a.projectile.splashPierce = Math.round(a.projectile.splashPierce * ps);
     }
   }
   return s;

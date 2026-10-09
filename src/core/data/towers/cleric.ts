@@ -29,7 +29,7 @@ export const cleric: TowerDef = {
   id: 'cleric',
   name: 'Cleric',
   title: 'Voice of the Dawn',
-  blurb: 'Radiant beams. Blesses nearby towers and keeps the faithful alive.',
+  blurb: 'Sees invisible foes; radiant beams strip their invisibility. Blesses nearby towers.',
   cost: 500,
   footprint: 21,
   placement: 'land',
@@ -37,7 +37,7 @@ export const cleric: TowerDef = {
   look: 'cleric',
   slots: ['ground', 'back', 'body', 'head', 'offHand', 'mainHand'],
   baseGear: [gear('mainHand', 'mace_plain')],
-  base: stats({ range: 145, attacks: [beam] }),
+  base: stats({ range: 160, trueSight: 1, attacks: [beam] }),
   paths: [
     {
       name: 'Light',

@@ -40,7 +40,7 @@ export interface EnemyDef {
   blurb: string;
 }
 
-const BASE = 100; // speed of the weakest slime (world units / s)
+const BASE = 85; // speed of the weakest slime (world units / s)
 
 export const ENEMIES: Record<EnemyId, EnemyDef> = {
   green: {
@@ -77,7 +77,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     id: 'violet',
     name: 'Violet Slime',
     hp: 1,
-    speed: BASE * 3.2,
+    speed: BASE * 2.5,
     radius: 15,
     immune: [],
     children: [{ id: 'amber', count: 1 }],
@@ -87,7 +87,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     id: 'crimson',
     name: 'Crimson Slime',
     hp: 1,
-    speed: BASE * 3.5,
+    speed: BASE * 2.8,
     radius: 15,
     immune: [],
     children: [{ id: 'violet', count: 1 }],
@@ -117,7 +117,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     id: 'warded',
     name: 'Warded Ooze',
     hp: 1,
-    speed: BASE * 3.0,
+    speed: BASE * 2.5,
     radius: 12,
     immune: ['arcane', 'fire', 'radiant'],
     children: [{ id: 'crimson', count: 2 }],
@@ -172,7 +172,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     id: 'ogre',
     name: 'Ogre Brute',
     hp: 200,
-    speed: BASE,
+    speed: BASE * 0.8,
     radius: 38,
     immune: [],
     children: [{ id: 'stone', count: 4 }],

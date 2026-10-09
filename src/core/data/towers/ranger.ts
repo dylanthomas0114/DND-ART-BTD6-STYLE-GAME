@@ -42,7 +42,7 @@ export const ranger: TowerDef = {
   look: 'ranger',
   slots: ['ground', 'back', 'companion', 'body', 'head', 'offHand', 'mainHand'],
   baseGear: [gear('mainHand', 'bow_short')],
-  base: stats({ range: 165, attacks: [arrow] }),
+  base: stats({ range: 182, attacks: [arrow] }),
   paths: [
     {
       name: 'Volley',

@@ -1,3 +1,4 @@
+import { BALANCE } from './data/balance';
 import { DIFFICULTIES, scaledCost } from './data/difficulty';
 import { ENEMIES, ENEMY_STRENGTH, type EnemyDef, type EnemyId, rbe } from './data/enemies';
 import { inEllipse, MAPS, type MapDef, type MapId } from './data/maps';
@@ -566,7 +567,7 @@ export class Game {
     // projectiles in flight are cleared; traps persist
     for (const p of this.projectiles) if (!p.trap) p.alive = false;
     this.compactProjectiles();
-    const bonus = 100 + this.round;
+    const bonus = BALANCE.roundBonusBase + BALANCE.roundBonusPerRound * this.round;
     let income = 0;
     let lives = 0;
     for (const t of this.towers) {
@@ -589,11 +590,12 @@ export class Game {
   /** Cash per layer popped, tapering in late rounds (as in classic tower defense). */
   private popCash(): number {
     const r = this.round;
-    if (r <= 50) return 1;
-    if (r <= 60) return 0.5;
-    if (r <= 85) return 0.2;
-    if (r <= 100) return 0.1;
-    return 0.05;
+    const k = BALANCE.popCashScale;
+    if (r <= 50) return k;
+    if (r <= 60) return 0.5 * k;
+    if (r <= 85) return 0.2 * k;
+    if (r <= 100) return 0.1 * k;
+    return 0.05 * k;
   }
 
   /**
@@ -620,6 +622,8 @@ export class Game {
     e.hp -= amt;
     e.lastDamaged = this.time;
     e.hitT = 0;
+    // holy light strips magical invisibility (innately invisible bosses stay hidden)
+    if (dtype === 'radiant' && e.invisible && !e.def.invisible) e.invisible = false;
     if (e.hp > 0) {
       if (effects) this.applyEffects(e, effects);
       return true;
@@ -815,7 +819,8 @@ export class Game {
       case 'projectile': {
         const target = this.findTarget(t, range, priority);
         if (!target) return false;
-        const ang = Math.atan2(target.y - t.y, target.x - t.x);
+        const aim = a.projectile.homing ? target : this.leadPoint(t, target, a.projectile.speed);
+        const ang = Math.atan2(aim.y - t.y, aim.x - t.x);
         t.facing = ang;
         const n = Math.max(1, Math.round(a.projectile.count));
         for (let k = 0; k < n; k++) {
@@ -938,6 +943,22 @@ export class Game {
         return true;
       }
     }
+  }
+
+  /** Predicts where a target will be when a projectile of `speed` reaches it (two iterations). */
+  private leadPoint(t: Tower, e: Enemy, speed: number): Vec2 {
+    if (speed <= 0 || e.frozenT > 0 || e.stunT > 0) return { x: e.x, y: e.y };
+    const path = this.paths[e.pathIndex]!;
+    const v = e.def.speed * e.speedMult * e.slowMult;
+    let px = e.x;
+    let py = e.y;
+    for (let i = 0; i < 2; i++) {
+      const time = Math.hypot(px - t.x, py - t.y + 10) / speed;
+      path.pointAt(e.progress + v * time, this.tmp);
+      px = this.tmp.x;
+      py = this.tmp.y;
+    }
+    return { x: px, y: py };
   }
 
   private nearestTo(x: number, y: number, r: number, exclude: number[], sees: boolean): Enemy | null {

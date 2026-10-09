@@ -40,7 +40,7 @@ export const rogue: TowerDef = {
   look: 'rogue',
   slots: ['ground', 'back', 'body', 'head', 'offHand', 'mainHand'],
   baseGear: [gear('mainHand', 'dagger_plain')],
-  base: stats({ range: 145, trueSight: 1, attacks: [daggers] }),
+  base: stats({ range: 160, trueSight: 1, attacks: [daggers] }),
   paths: [
     {
       name: 'Blades',

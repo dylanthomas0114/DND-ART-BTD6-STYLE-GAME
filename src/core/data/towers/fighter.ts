@@ -39,7 +39,7 @@ export const fighter: TowerDef = {
   look: 'fighter',
   slots: ['ground', 'back', 'body', 'companion', 'head', 'offHand', 'mainHand'],
   baseGear: [gear('mainHand', 'sword_rusty')],
-  base: stats({ range: 95, attacks: [sweep] }),
+  base: stats({ range: 105, attacks: [sweep] }),
   paths: [
     {
       name: 'Blade',

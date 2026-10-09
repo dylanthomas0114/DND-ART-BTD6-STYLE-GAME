@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { DIFFICULTIES } from '../core/data/difficulty';
+import { roundHasInvisible } from '../core/data/rounds';
 import type { MapId } from '../core/data/maps';
 import { TOWERS } from '../core/data/towers';
 import type { TowerId } from '../core/data/towerTypes';
@@ -107,6 +108,8 @@ export function GameScreen({ map, difficulty, save }: Props) {
             id: Math.random(),
             text: e.round === g.finalRound ? 'Final Round!' : `Round ${e.round}`,
           });
+        else if (roundHasInvisible(e.round) && !g.towers.some((t) => g.seesInvisible(t)))
+          toast('Invisible foes! You need True Sight (Rogue, Cleric…)');
       }),
       g.events.on('gameOver', (e) => {
         playSfx(e.won ? 'win' : 'lose');

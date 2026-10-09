@@ -1,5 +1,5 @@
 import { hash32, Rng } from '../rng';
-import { type EnemyId, rbe } from './enemies';
+import { ENEMIES, type EnemyId, rbe } from './enemies';
 
 export interface SpawnGroup {
   enemy: EnemyId;
@@ -97,9 +97,9 @@ const BUDGET: [number, number][] = [
   [50, 3300],
   [55, 4500],
   [60, 6000],
-  [65, 7600],
-  [70, 9600],
-  [75, 12500],
+  [65, 7000],
+  [70, 8600],
+  [75, 11000],
   [80, 20000],
   [90, 45000],
   [100, 90000],
@@ -145,35 +145,49 @@ function composeRound(r: number): RoundDef {
   const rng = new Rng(hash32('round', r));
   const budget = roundBudget(r);
   const pool = POOL.filter((p) => r >= p.minR && (p.maxR === undefined || r <= p.maxR));
-  const totalW = pool.reduce((s, p) => s + p.weight, 0);
-  const groups: SpawnGroup[] = [];
-  let spent = 0;
-  let delay = 0;
-  const modChance = Math.min(0.55, 0.15 + (r - 40) * 0.01);
   const freeplay = r > 80;
   const hpMult = freeplay ? 1 + (r - 80) * 0.05 : 1;
   const speedMult = freeplay ? Math.min(1.6, 1 + (r - 80) * 0.01) : 1;
-
-  for (let guard = 0; guard < 12 && spent < budget * 0.95; guard++) {
+  // modifiers ramp in gently after round 40
+  const modChance = Math.min(0.45, 0.06 + (r - 40) * 0.009);
+  const nGroups = Math.min(6, 3 + Math.floor((r - 40) / 15));
+  const shares = Array.from({ length: nGroups }, () => rng.range(0.6, 1.4));
+  const total = shares.reduce((a, b) => a + b, 0);
+  const groups: SpawnGroup[] = [];
+  let invisibleGroups = 0;
+  const usedImmunities = new Set<string>();
+  for (let i = 0; i < nGroups; i++) {
+    const share = (budget * shares[i]!) / total;
+    const mods: Mods = {};
+    // fairness: before round 60 at most one invisible group per round
+    if (rng.next() < modChance && (r >= 60 || invisibleGroups === 0)) mods.invisible = true;
+    if (rng.next() < modChance) mods.regen = true;
+    if (rng.next() < modChance) mods.armored = true;
+    // pick the strongest affordable enemy, weighted by pool weight
+    const affordable = pool.filter((p) => rbe(p.enemy, mods.armored) * hpMult <= share);
+    // fairness: don't stack groups that resist the same damage types in one round
+    const diverse = affordable.filter((p) => !ENEMIES[p.enemy].immune.some((d) => usedImmunities.has(d)));
+    const options = diverse.length > 0 ? diverse : affordable;
+    if (options.length === 0) continue;
+    const totalW = options.reduce((a, p) => a + p.weight, 0);
     let roll = rng.next() * totalW;
-    let pick = pool[0]!;
-    for (const p of pool) {
+    let pick = options[0]!;
+    for (const p of options) {
       roll -= p.weight;
       if (roll <= 0) {
         pick = p;
         break;
       }
     }
-    const mods: Mods = {};
-    if (rng.next() < modChance) mods.invisible = true;
-    if (rng.next() < modChance) mods.regen = true;
-    if (rng.next() < modChance * 0.8) mods.armored = true;
     const unit = rbe(pick.enemy, mods.armored) * hpMult;
-    const remaining = budget - spent;
-    if (unit > remaining * 1.15) continue;
-    const share = rng.range(0.2, 0.5);
-    const count = Math.max(1, Math.min(120, Math.floor((remaining * share) / unit) || 1));
-    const spacing = Math.max(0.08, Math.min(3, (ROUND_SECONDS * rng.range(0.4, 0.8)) / count));
+    const count = Math.max(1, Math.min(150, Math.round(share / unit)));
+    const spacing = Math.max(0.08, Math.min(2.5, (ROUND_SECONDS * 0.6) / count));
+    const delay = (i * ROUND_SECONDS * 0.55) / nGroups + rng.range(0, 1.5);
+    if (!ENEMIES[pick.enemy].shell) delete mods.armored;
+    // fairness: no invisible + regenerating high-tier oozes before round 60
+    if (r < 60 && mods.invisible && mods.regen && rbe(pick.enemy) >= rbe('prismatic')) delete mods.regen;
+    if (mods.invisible) invisibleGroups++;
+    for (const d of ENEMIES[pick.enemy].immune) usedImmunities.add(d);
     groups.push({
       enemy: pick.enemy,
       count,
@@ -182,8 +196,6 @@ function composeRound(r: number): RoundDef {
       ...mods,
       ...(freeplay ? { hpMult, speedMult } : {}),
     });
-    spent += unit * count;
-    delay += rng.range(2, 5);
   }
   if (groups.length === 0)
     groups.push({
@@ -213,6 +225,11 @@ export function getRound(r: number): RoundDef {
 /** Total RBE of a round (for tests/balance tooling). */
 export function roundRbe(r: number): number {
   return getRound(r).reduce((s, gr) => s + gr.count * rbe(gr.enemy, gr.armored) * (gr.hpMult ?? 1), 0);
+}
+
+/** True when a round contains invisible foes (the UI warns the player). */
+export function roundHasInvisible(r: number): boolean {
+  return getRound(r).some((g) => g.invisible || g.enemy === 'lich');
 }
 
 export function roundSpawnDuration(def: RoundDef): number {

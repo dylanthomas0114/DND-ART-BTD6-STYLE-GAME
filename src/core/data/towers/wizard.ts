@@ -40,7 +40,7 @@ export const wizard: TowerDef = {
   look: 'wizard',
   slots: ['ground', 'back', 'companion', 'body', 'head', 'offHand', 'mainHand'],
   baseGear: [gear('mainHand', 'wand_plain')],
-  base: stats({ range: 160, attacks: [missile] }),
+  base: stats({ range: 176, attacks: [missile] }),
   paths: [
     {
       name: 'Evocation',

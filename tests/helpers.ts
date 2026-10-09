@@ -35,25 +35,35 @@ export function place(g: Game, id: TowerId, frac: number, pathIndex = 0): number
   return r.uid;
 }
 
-/** Legal spot that covers the most road within `range` (how a decent player places towers). */
+/**
+ * Legal spot that covers the most road within `range`, preferring road that existing towers don't
+ * already cover (how a decent player spreads a defence).
+ */
 export function bestSpot(
   g: Game,
   id: TowerId,
   range: number,
   opts: { maxFrac?: number; minFrac?: number } = {},
 ): { x: number; y: number } | null {
-  const samples: { x: number; y: number }[] = [];
+  const samples: { x: number; y: number; w: number }[] = [];
   for (const path of g.paths) {
     const from = path.length * (opts.minFrac ?? 0);
     const to = path.length * (opts.maxFrac ?? 1);
-    for (let d = from; d < to; d += 20) samples.push(path.pointAt(d, { x: 0, y: 0 }));
+    for (let d = from; d < to; d += 20) {
+      const p = path.pointAt(d, { x: 0, y: 0 });
+      if (p.x < 0 || p.x > 1600) continue;
+      const covered = g.towers.some(
+        (t) => t.stats.attacks.length > 0 && (t.x - p.x) ** 2 + (t.y - p.y) ** 2 <= g.rangeOf(t) ** 2,
+      );
+      samples.push({ x: p.x, y: p.y, w: covered ? 0.45 : 1 });
+    }
   }
   let best: { x: number; y: number } | null = null;
   let bestScore = 0;
   for (let x = 30; x < 1600; x += 20) {
     for (let y = 30; y < 900; y += 20) {
       let score = 0;
-      for (const s of samples) if ((s.x - x) ** 2 + (s.y - y) ** 2 <= range * range) score++;
+      for (const s of samples) if ((s.x - x) ** 2 + (s.y - y) ** 2 <= range * range) score += s.w;
       if (score <= bestScore) continue;
       if (!g.canPlace(id, x, y).ok) continue;
       bestScore = score;
