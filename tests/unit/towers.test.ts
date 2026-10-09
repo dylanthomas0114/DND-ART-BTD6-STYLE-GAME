@@ -156,3 +156,47 @@ describe('immunity coverage', () => {
     });
   }
 });
+
+import { GEAR } from '../../src/render/art/gear';
+
+describe('gear art registry', () => {
+  it('every gear id used by tower data has a drawing', () => {
+    const missing: string[] = [];
+    for (const def of TOWER_LIST) {
+      for (const g of [...def.baseGear, ...def.paths.flatMap((p) => p.upgrades.flatMap((u) => u.gear))]) {
+        if (!GEAR[g.art]) missing.push(`${def.id}:${g.art}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('every registered drawing is used (no orphans)', () => {
+    const used = new Set(
+      TOWER_LIST.flatMap((def) => [
+        ...def.baseGear,
+        ...def.paths.flatMap((p) => p.upgrades.flatMap((u) => u.gear)),
+      ]).map((g) => g.art),
+    );
+    expect(Object.keys(GEAR).filter((k) => !used.has(k))).toEqual([]);
+  });
+
+  it('every drawing runs against a recording pen without throwing', async () => {
+    const { Draw } = await import('../../src/render/art/pen');
+    const calls = { n: 0 };
+    const pen = new Proxy(
+      {},
+      {
+        get: () =>
+          function (this: unknown) {
+            calls.n++;
+            return pen;
+          },
+      },
+    ) as never;
+    for (const [id, art] of Object.entries(GEAR)) {
+      const before = calls.n;
+      art.draw(new Draw(pen));
+      expect(calls.n - before, id).toBeGreaterThan(3);
+    }
+  });
+});
