@@ -1,0 +1,12 @@
+dist
+dist-*
+android
+ios
+node_modules
+package-lock.json
+src/audio/zzfx.ts
+public/assets
+art/source
+coverage
+test-results
+playwright-report

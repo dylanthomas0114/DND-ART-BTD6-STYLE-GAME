@@ -1,0 +1,46 @@
+{
+  "name": "arcane-ramparts",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Fantasy tower defense for mobile",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:artifact": "vite build --mode artifact",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "sim:balance": "vitest run --config vitest.balance.config.ts",
+    "e2e": "playwright test",
+    "art:process": "node scripts/process-art.mjs",
+    "android:sync": "npm run build && cap sync android",
+    "android:debug": "bash scripts/build-android.sh"
+  },
+  "dependencies": {
+    "@preact/signals": "2.11.3",
+    "pixi-filters": "6.1.5",
+    "pixi.js": "8.21.0",
+    "preact": "11.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.0",
+    "@types/node": "22.19.1",
+    "eslint": "10.11.0",
+    "globals": "16.4.0",
+    "prettier": "3.9.9",
+    "sharp": "0.35.5",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1",
+    "vite": "8.3.1",
+    "vitest": "5.0.1"
+  }
+}
