@@ -11,6 +11,8 @@ import { GameScreen } from './ui/GameScreen';
 import { Backdrop, MainMenu, MapSelect, SettingsScreen } from './ui/menus';
 import { screen } from './ui/store';
 import { initAudio } from './audio/engine';
+import { initLifecycle } from './platform/lifecycle';
+import { Capacitor } from '@capacitor/core';
 
 const host = document.getElementById('app')!;
 const params = new URLSearchParams(location.search);
@@ -52,8 +54,28 @@ async function boot(): Promise<void> {
   hub.app = app;
   hub.bank = new TextureBank(app, Math.min(2, Math.max(1, window.devicePixelRatio || 1)));
   initAudio();
+  initLifecycle(() => {
+    const s = screen.value;
+    if (s.name === 'game') {
+      window.dispatchEvent(new Event('ar:back'));
+      return true;
+    }
+    if (s.name !== 'menu') {
+      screen.value = { name: 'menu' };
+      return true;
+    }
+    return false;
+  });
   await document.fonts?.ready;
   render(<App />, ui);
+  if (
+    __ENABLE_SW__ &&
+    !Capacitor.isNativePlatform() &&
+    'serviceWorker' in navigator &&
+    location.protocol === 'https:'
+  ) {
+    void navigator.serviceWorker.register('./sw.js').catch(() => undefined);
+  }
   (window as unknown as { __app: unknown }).__app = { ready: true };
 }
 

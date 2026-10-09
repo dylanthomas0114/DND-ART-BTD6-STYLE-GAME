@@ -182,7 +182,10 @@ export function GameScreen({ map, difficulty, save }: Props) {
       }
     };
     document.addEventListener('visibilitychange', vis);
+    const back = () => setModal((m) => (m === 'over' ? m : m ? null : 'pause'));
+    window.addEventListener('ar:back', back);
     return () => {
+      window.removeEventListener('ar:back', back);
       setMusicIntensity(0);
       offs.forEach((o) => o());
       document.removeEventListener('visibilitychange', vis);
