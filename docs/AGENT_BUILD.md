@@ -32,6 +32,16 @@ Requirements: JDK 21 and network access to dl.google.com and maven.google.com.
 - iOS: `npx cap sync ios`, then build on macOS (GitHub `macos` runner). **HUMAN**: an Apple Developer Program account plus signing certificates and profiles.
 - Store listings: **HUMAN**: a Google Play Console account and App Store Connect access.
 
-## 5. CI
+## 5. Instant phone playtest (claude.ai Artifact)
+
+`npm run build:artifact` builds into `dist-artifact/` with the service worker off. Publish a page that links `assets/index-*.css` and `assets/index-*.js`, and pass every file in `dist-artifact/` as supporting files.
+
+## 6. Performance checks
+
+- `npm run sim:balance` includes a dense late round that must stay under 1.5 ms per sim step (measured: about 0.08 ms with about 300 enemies).
+- `node scripts/perf-js.mjs` measures JS time per frame in Chromium, excluding GPU work (measured: 0.6 ms median with 200+ enemies).
+- `node scripts/perf-render.mjs` reports FPS under load. Software GL in containers is not representative of phone GPUs.
+
+## 7. CI
 
 `.github/workflows/ci.yml` runs lint, typecheck, unit tests, balance runs, build and e2e. `android.yml` uploads a debug APK artifact.

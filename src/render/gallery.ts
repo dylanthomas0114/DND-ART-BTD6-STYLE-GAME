@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics, Rectangle, Text } from 'pixi.js';
 import { TOWER_LIST, TOWERS } from '../core/data/towers';
 import type { TowerId, Tiers } from '../core/data/towerTypes';
 import { allValidTiers, computeGear } from '../core/upgrades';
@@ -82,7 +82,54 @@ export async function startGallery(host: HTMLElement, param: string): Promise<vo
     }
   });
 
+  /** Renders tier N vs N-1 for every tower/path and returns the fraction of pixels that changed. */
+  const tierDiff = async () => {
+    const out: { id: TowerId; path: number; tier: number; diff: number }[] = [];
+    const renderPixels = (def: (typeof TOWER_LIST)[number], tiers: Tiers) => {
+      const v = new TowerView(def, bank);
+      v.setGear(computeGear(def, tiers));
+      const holder = new Container();
+      holder.addChild(v.root);
+      v.root.position.set(110, 170);
+      const bg = new Graphics().rect(0, 0, 220, 220).fill({ color: 0x000000, alpha: 0 });
+      holder.addChildAt(bg, 0);
+      const px = app.renderer.extract.pixels({
+        target: holder,
+        frame: new Rectangle(0, 0, 220, 220),
+        resolution: 1,
+      });
+      holder.destroy({ children: true });
+      return px.pixels;
+    };
+    for (const def of TOWER_LIST) {
+      for (let p = 0; p < 3; p++) {
+        for (let t = 1; t <= 5; t++) {
+          const a: Tiers = [0, 0, 0];
+          a[p] = t - 1;
+          const b: Tiers = [0, 0, 0];
+          b[p] = t;
+          const pa = renderPixels(def, a);
+          const pb = renderPixels(def, b);
+          let changed = 0;
+          let opaque = 0;
+          for (let i = 0; i < pa.length; i += 4) {
+            if (pa[i + 3]! > 20 || pb[i + 3]! > 20) opaque++;
+            const d =
+              Math.abs(pa[i]! - pb[i]!) +
+              Math.abs(pa[i + 1]! - pb[i + 1]!) +
+              Math.abs(pa[i + 2]! - pb[i + 2]!) +
+              Math.abs(pa[i + 3]! - pb[i + 3]!);
+            if (d > 60) changed++;
+          }
+          out.push({ id: def.id, path: p, tier: t, diff: opaque ? changed / opaque : 0 });
+        }
+      }
+    }
+    return out;
+  };
+
   (window as unknown as { __gallery: unknown }).__gallery = {
+    tierDiff,
     ready: true,
     count: views.length,
     textures: () => bank.size,
