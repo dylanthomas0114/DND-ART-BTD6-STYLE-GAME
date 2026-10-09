@@ -24,6 +24,8 @@
     "android:debug": "bash scripts/build-android.sh"
   },
   "dependencies": {
+    "@fontsource/alegreya-sans": "5.3.0",
+    "@fontsource/cinzel": "5.3.0",
     "@preact/signals": "2.11.3",
     "pixi-filters": "6.1.5",
     "pixi.js": "8.21.0",

@@ -8,6 +8,8 @@ import { C } from './palette';
 
 /** Extra painted margin on each side so 20:9 screens show art instead of bars (21:9 total). */
 export const MAP_MARGIN_X = Math.round((WORLD_H * 21) / 9 - WORLD_W) / 2;
+/** Vertical margin so 4:3 tablets show terrain above/below the play area instead of bars. */
+export const MAP_MARGIN_Y = 320;
 
 type Decor = MapDef['theme']['decor'][number];
 
@@ -100,26 +102,29 @@ export function drawMapGround(d: Draw, map: MapDef, includeRoad = true): void {
   const [top, bottom] = map.theme.ground;
   const x0 = -MAP_MARGIN_X;
   const x1 = WORLD_W + MAP_MARGIN_X;
-  const bands = 24;
+  const y0 = -MAP_MARGIN_Y;
+  const y1 = WORLD_H + MAP_MARGIN_Y;
+  const bands = 32;
   for (let i = 0; i < bands; i++) {
+    const k = Math.max(0, Math.min(1, (y0 + ((i + 0.5) * (y1 - y0)) / bands) / WORLD_H));
     d.p
-      .rect(x0, (i * WORLD_H) / bands - 1, x1 - x0, WORLD_H / bands + 2)
-      .fill({ color: mix(top, bottom, i / (bands - 1)) });
+      .rect(x0, y0 + (i * (y1 - y0)) / bands - 1, x1 - x0, (y1 - y0) / bands + 2)
+      .fill({ color: mix(top, bottom, k) });
   }
   const rng = new Rng(map.id.length * 7919 + 17);
   // soft terrain blotches
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 130; i++) {
     const x = rng.range(x0, x1);
-    const y = rng.range(0, WORLD_H);
+    const y = rng.range(y0, y1);
     const r = rng.range(30, 110);
     d.p
       .ellipse(x, y, r, r * 0.55)
       .fill({ color: rng.next() < 0.5 ? tint(top, 0.12) : shade(bottom, 0.12), alpha: 0.35 });
   }
   // grass tufts / pebbles
-  for (let i = 0; i < 420; i++) {
+  for (let i = 0; i < 600; i++) {
     const x = rng.range(x0, x1);
-    const y = rng.range(0, WORLD_H);
+    const y = rng.range(y0, y1);
     const c = rng.next() < 0.5 ? tint(top, 0.25) : shade(bottom, 0.25);
     d.p
       .moveTo(x - 3, y)
@@ -190,9 +195,9 @@ export function scatterDecor(map: MapDef): DecorItem[] {
   const items: DecorItem[] = [];
   for (const b of map.blockers)
     items.push({ kind: rng.pick(map.theme.decor), x: b.x, y: b.y + b.r * 0.4, s: b.r / 22 });
-  for (let i = 0; i < 400 && items.length < 46; i++) {
+  for (let i = 0; i < 600 && items.length < 64; i++) {
     const x = rng.range(-MAP_MARGIN_X + 20, WORLD_W + MAP_MARGIN_X - 20);
-    const y = rng.range(30, WORLD_H - 10);
+    const y = rng.range(-MAP_MARGIN_Y + 40, WORLD_H + MAP_MARGIN_Y - 10);
     const inPlay = x > 0 && x < WORLD_W;
     if (paths.some((p) => p.closest(x, y).dist < map.roadWidth / 2 + 30)) continue;
     if (map.water.some((w) => inEllipse(w, x, y, 20))) continue;

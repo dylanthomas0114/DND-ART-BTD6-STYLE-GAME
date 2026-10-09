@@ -12,7 +12,7 @@ import {
   drawIceBlock,
   drawRegenOverlay,
 } from './art/enemies';
-import { drawDecor, drawMapGround, drawRoads, MAP_MARGIN_X, scatterDecor } from './art/mapArt';
+import { drawDecor, drawMapGround, drawRoads, MAP_MARGIN_X, MAP_MARGIN_Y, scatterDecor } from './art/mapArt';
 import { DTYPE_COLOR } from './art/palette';
 import { Draw } from './art/pen';
 import { FX, PROJECTILES } from './art/projectiles';
@@ -243,7 +243,9 @@ export class WorldView {
       this.particles.container,
       this.overlay,
     );
-    this.flash.rect(-MAP_MARGIN_X, 0, WORLD_W + MAP_MARGIN_X * 2, WORLD_H).fill({ color: 0xffffff });
+    this.flash
+      .rect(-MAP_MARGIN_X, -MAP_MARGIN_Y, WORLD_W + MAP_MARGIN_X * 2, WORLD_H + MAP_MARGIN_Y * 2)
+      .fill({ color: 0xffffff });
     this.flash.alpha = 0;
     this.root.addChild(this.flash);
     this.buildBackground();
@@ -303,11 +305,11 @@ export class WorldView {
       const tex = await Assets.load<Texture>(url);
       const s = new Sprite(tex);
       // painted art covers the full 21:9 area
+      // painted art covers the 21:9 band; the code-drawn terrain stays visible above/below on tablets
       s.position.set(-MAP_MARGIN_X, 0);
       s.width = WORLD_W + MAP_MARGIN_X * 2;
       s.height = WORLD_H;
       this.bgLayer.addChildAt(s, this.bgLayer.getChildIndex(fallback) + 1);
-      fallback.visible = false;
     } catch {
       /* keep the code-drawn fallback */
     }
@@ -745,6 +747,8 @@ export class WorldView {
     }
 
     this.particles.update(dt);
+    this.drawUnderlay();
+    if (this.ghost) this.ghost.view.update(dt, { facing: 0.3, slotT: {}, anyT: 99 });
 
     // camera shake & flash
     if (this.shakeT > 0) {
@@ -800,11 +804,83 @@ export class WorldView {
     }
   }
 
-  /** A preview TowerView for the placement ghost (caller owns it). */
-  makeGhost(id: TowerId): TowerView {
-    const v = new TowerView(TOWERS[id], this.bank);
-    v.setGear(computeGear(TOWERS[id], [0, 0, 0]));
-    return v;
+  // ---------------------------------------------------------------------------------- selection & ghost
+  private selectedUid: number | null = null;
+  private ghost: {
+    id: TowerId;
+    view: TowerView;
+    x: number;
+    y: number;
+    valid: boolean;
+    visible: boolean;
+  } | null = null;
+
+  setSelected(uid: number | null): void {
+    this.selectedUid = uid;
+  }
+
+  setGhost(id: TowerId | null, x = 0, y = 0, valid = true, visible = true): void {
+    if (!id) {
+      this.ghost?.view.root.destroy({ children: true });
+      this.ghost = null;
+      return;
+    }
+    if (!this.ghost || this.ghost.id !== id) {
+      this.ghost?.view.root.destroy({ children: true });
+      const view = new TowerView(TOWERS[id], this.bank);
+      view.setGear(computeGear(TOWERS[id], [0, 0, 0]));
+      view.root.alpha = 0.85;
+      this.overlay.addChild(view.root);
+      this.ghost = { id, view, x, y, valid, visible };
+    }
+    Object.assign(this.ghost, { x, y, valid, visible });
+    this.ghost.view.root.position.set(x, y);
+    this.ghost.view.root.visible = visible;
+    this.ghost.view.root.tint = valid ? 0xffffff : 0xff8080;
+  }
+
+  /** Tower under a world-space point (sprites extend upward from the feet). */
+  pickTower(wx: number, wy: number): Tower | null {
+    let best: Tower | null = null;
+    let bd = Infinity;
+    for (const t of this.game.towers) {
+      const d1 = Math.hypot(t.x - wx, t.y - wy);
+      const d2 = Math.hypot(t.x - wx, t.y - 34 - wy);
+      const d = Math.min(d1, d2);
+      if (d < Math.max(40, t.def.footprint + 18) && d < bd) {
+        bd = d;
+        best = t;
+      }
+    }
+    return best;
+  }
+
+  private drawUnderlay(): void {
+    const u = this.underlay;
+    u.clear();
+    const sel = this.selectedUid !== null ? this.game.towerByUid(this.selectedUid) : undefined;
+    if (sel) {
+      const r = this.game.rangeOf(sel);
+      u.circle(sel.x, sel.y, r).fill({ color: 0xffffff, alpha: 0.12 });
+      u.circle(sel.x, sel.y, r).stroke({ width: 3, color: 0xffffff, alpha: 0.7 });
+      if (sel.stats.support.radius > 0)
+        u.circle(sel.x, sel.y, sel.stats.support.radius).stroke({ width: 2, color: 0xffe48a, alpha: 0.7 });
+      const pulse = 0.6 + Math.sin(this.time * 6) * 0.2;
+      u.ellipse(sel.x, sel.y + 2, sel.def.footprint + 10, (sel.def.footprint + 10) * 0.42).stroke({
+        width: 4,
+        color: 0xffe48a,
+        alpha: pulse,
+      });
+    }
+    const g = this.ghost;
+    if (g && g.visible) {
+      const def = TOWERS[g.id];
+      const r = def.base.range;
+      const col = g.valid ? 0x9cff8a : 0xff6060;
+      u.circle(g.x, g.y, r).fill({ color: col, alpha: 0.14 });
+      u.circle(g.x, g.y, r).stroke({ width: 3, color: col, alpha: 0.8 });
+      u.ellipse(g.x, g.y + 2, def.footprint, def.footprint * 0.45).fill({ color: col, alpha: 0.35 });
+    }
   }
 
   destroy(): void {
