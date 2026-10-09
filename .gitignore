@@ -1,0 +1,22 @@
+node_modules/
+dist/
+dist-*/
+coverage/
+test-results/
+playwright-report/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+# Capacitor / native build outputs
+android/app/build/
+android/.gradle/
+android/build/
+android/local.properties
+android/app/release/
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+*.keystore
+*.jks
