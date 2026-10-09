@@ -8,7 +8,8 @@ import type { SaveState } from '../core/game';
 import type { DifficultyId, TargetPriority } from '../core/types';
 import { hub } from '../render/hub';
 import { GameSession, type Speed } from '../session';
-import { playSfx } from '../audio/sfx';
+import { playSfx, type SfxName } from '../audio/sfx';
+import { setMusicIntensity } from '../audio/engine';
 import { haptic } from '../platform/haptics';
 import { gearIcon, useImage } from './icons';
 import { SettingsPanel } from './menus';
@@ -123,6 +124,32 @@ export function GameScreen({ map, difficulty, save }: Props) {
       g.events.on('immune', () => playSfx('immune', 0.4)),
       g.events.on('explode', () => playSfx('boom', 0.6)),
       g.events.on('ability', () => playSfx('ability')),
+      g.events.on('cash', () => playSfx('coin')),
+      g.events.on('leak', () => playSfx('leak', 0.6)),
+      g.events.on('attack', (e) => {
+        const t = g.towerByUid(e.towerUid);
+        if (!t) return;
+        const a = t.stats.attacks.find((x) => x.id === e.attackId);
+        const name: SfxName =
+          e.kind === 'aura'
+            ? 'freeze'
+            : e.kind === 'instant'
+              ? a?.dtype === 'piercing' || a?.dtype === 'true'
+                ? 'shoot'
+                : 'beam'
+              : e.kind === 'melee'
+                ? 'blade'
+                : a?.dtype === 'blast'
+                  ? 'shoot'
+                  : a?.dtype === 'piercing'
+                    ? 'bow'
+                    : a?.dtype === 'slashing'
+                      ? 'blade'
+                      : 'magic';
+        playSfx(name, 0.35);
+      }),
+      g.events.on('roundStart', () => setMusicIntensity(1)),
+      g.events.on('roundEnd', () => setMusicIntensity(0)),
     ];
     const resize = () => {
       const w = app.screen.width;
@@ -156,6 +183,7 @@ export function GameScreen({ map, difficulty, save }: Props) {
     };
     document.addEventListener('visibilitychange', vis);
     return () => {
+      setMusicIntensity(0);
       offs.forEach((o) => o());
       document.removeEventListener('visibilitychange', vis);
       app.renderer.off('resize', resize);
@@ -175,6 +203,10 @@ export function GameScreen({ map, difficulty, save }: Props) {
   useEffect(() => {
     if (session) session.autoStart = settings.value.autoStart;
   }, [settings.value.autoStart, session]);
+
+  useEffect(() => {
+    if (session) session.qualityMode = settings.value.quality;
+  }, [settings.value.quality, session]);
 
   // ---------------------------------------------------------------------- input
   const worldPoint = (e: PointerEvent, lift: boolean) => {

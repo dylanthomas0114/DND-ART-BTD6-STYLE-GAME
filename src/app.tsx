@@ -3,12 +3,14 @@ import './ui/theme.css';
 import { startDemo } from './demo';
 import { startBestiary } from './render/bestiary';
 import { startGallery } from './render/gallery';
+import { startMapGuide } from './render/mapGuide';
 import { TextureBank } from './render/bake';
 import { hub } from './render/hub';
 import { createPixiApp } from './render/pixiApp';
 import { GameScreen } from './ui/GameScreen';
 import { Backdrop, MainMenu, MapSelect, SettingsScreen } from './ui/menus';
 import { screen } from './ui/store';
+import { initAudio } from './audio/engine';
 
 const host = document.getElementById('app')!;
 const params = new URLSearchParams(location.search);
@@ -49,6 +51,7 @@ async function boot(): Promise<void> {
   const app = await createPixiApp(stage);
   hub.app = app;
   hub.bank = new TextureBank(app, Math.min(2, Math.max(1, window.devicePixelRatio || 1)));
+  initAudio();
   await document.fonts?.ready;
   render(<App />, ui);
   (window as unknown as { __app: unknown }).__app = { ready: true };
@@ -60,6 +63,9 @@ if (params.has('gallery')) {
 } else if (params.has('bestiary')) {
   host.style.cssText = 'position:fixed;inset:0;';
   void startBestiary(host);
+} else if (params.has('mapguide')) {
+  host.style.cssText = 'position:fixed;inset:0;';
+  void startMapGuide(host, params.get('mapguide') ?? 'glade');
 } else if (params.has('demo')) {
   host.style.cssText = 'position:fixed;inset:0;';
   void startDemo(host, params);

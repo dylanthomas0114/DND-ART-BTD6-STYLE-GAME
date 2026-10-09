@@ -68,17 +68,31 @@ export function Backdrop() {
   return null;
 }
 
+function Logo() {
+  const [painted, setPainted] = useState(false);
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setPainted(true);
+    img.src = './assets/ui/logo.webp';
+  }, []);
+  if (painted)
+    return <img src="./assets/ui/logo.webp" alt="Arcane Ramparts" style={{ width: 'min(70vw, 30em)' }} />;
+  return (
+    <h1 class="logo">
+      Arcane
+      <br />
+      Ramparts
+      <small>A Tower Defense Saga</small>
+    </h1>
+  );
+}
+
 export function MainMenu() {
   const save = savedGame.value;
   return (
     <div class="screen dim">
       <div class="menu-col">
-        <h1 class="logo">
-          Arcane
-          <br />
-          Ramparts
-          <small>A Tower Defense Saga</small>
-        </h1>
+        <Logo />
         <div style={{ height: '0.6em' }} />
         <button
           class="btn green"

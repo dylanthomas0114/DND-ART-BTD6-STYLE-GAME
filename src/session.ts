@@ -23,6 +23,8 @@ export class GameSession {
   onFrame: (() => void) | null = null;
   /** Measured FPS over the last ~60 frames. */
   fps = 60;
+  /** 'auto' adapts to frame time; otherwise the tier is fixed by the player. */
+  qualityMode: 'auto' | 'low' | 'medium' | 'high' = 'auto';
 
   constructor(
     readonly app: Application,
@@ -63,7 +65,8 @@ export class GameSession {
 
   private adaptQuality(avgMs: number): void {
     const v = this.view;
-    if (avgMs > 24 && v.quality !== 'low') {
+    if (this.qualityMode !== 'auto') v.quality = this.qualityMode;
+    else if (avgMs > 24 && v.quality !== 'low') {
       v.quality = v.quality === 'high' ? 'medium' : 'low';
       this.frameMs.length = 0;
     }
