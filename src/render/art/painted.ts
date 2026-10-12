@@ -54,7 +54,7 @@ export const PAINTED_TOWERS: Record<string, PaintedTowerSpec> = {
       quiver_full: { kind: 'back', size: 52, dim: 'h', dx: -15, dy: -62, rot: -0.35 },
       quiver_storm: { kind: 'back', size: 52, dim: 'h', dx: -15, dy: -62, rot: -0.35 },
       quiver_sun: { kind: 'back', size: 52, dim: 'h', dx: -15, dy: -62, rot: -0.35 },
-      hood_green: { kind: 'head', size: 40, dim: 'w', dy: 6 },
+      hood_green: { kind: 'head', size: 44, dim: 'w', dy: 6 },
       hood_hawk: { kind: 'head', size: 44, dim: 'w', dy: 8, py: 0.85 },
       mantle_fur: { kind: 'body', size: 38, dim: 'w', dx: 1, dy: -41 },
       armor_beastlord: { kind: 'body', size: 40, dim: 'w', dx: 1, dy: -38 },

@@ -137,7 +137,7 @@ export function humanoidAnchors(look: Look): Anchors {
   const headR = stout ? 20 : 21;
   return {
     ground: { x: 0, y: 0 },
-    back: { x: -3, y: chest + 14 },
+    back: { x: stout ? -12 : -9, y: chest + 12 },
     body: { x: 0, y: (hip + chest) / 2 },
     head: { x: 2, y: chest - headR + 4 },
     mainShoulder: { x: stout ? 15 : 12, y: chest + 7 },

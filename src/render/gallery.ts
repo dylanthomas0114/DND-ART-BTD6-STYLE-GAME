@@ -103,6 +103,9 @@ export async function startGallery(host: HTMLElement, param: string): Promise<vo
       holder.destroy({ children: true });
       return px.pixels;
     };
+    // Views start at a random idle-bob phase; pin it so the diff measures gear, not bob noise.
+    const random = Math.random;
+    Math.random = () => 0;
     for (const def of TOWER_LIST) {
       for (let p = 0; p < 3; p++) {
         for (let t = 1; t <= 5; t++) {
@@ -127,6 +130,7 @@ export async function startGallery(host: HTMLElement, param: string): Promise<vo
         }
       }
     }
+    Math.random = random;
     return out;
   };
 
