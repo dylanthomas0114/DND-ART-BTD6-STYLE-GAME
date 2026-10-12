@@ -10,6 +10,8 @@ import {
   TREASURY_ANCHORS,
 } from './art/rigs';
 import type { TextureBank } from './bake';
+import { PaintedTowerView } from './paintedTower';
+import { hasPaintedTower } from './spriteAtlas';
 
 const HALF_PI = Math.PI / 2;
 
@@ -129,6 +131,10 @@ interface Slot {
 }
 
 export interface TowerAnimState {
+  /** Seconds until the main attack fires (sim cooldown), for anticipation clips. */
+  readyIn?: number;
+  /** Seconds since the main attack fired (sim), for follow-through clips. */
+  since?: number;
   facing: number;
   /** Seconds since the last attack per animated slot. */
   slotT: Record<string, number>;
@@ -136,11 +142,25 @@ export interface TowerAnimState {
   anyT: number;
 }
 
+/** What the world needs from a tower visual, whether vector-rigged or painted. */
+export interface TowerViewLike {
+  readonly root: Container;
+  readonly def: TowerDef;
+  setGear(gear: GearDef[]): void;
+  hasGear(slot: string): string | null;
+  update(dt: number, s: TowerAnimState): void;
+}
+
+/** Painted rig when its art loaded, otherwise the code-drawn rig (always playable). */
+export function makeTowerView(def: TowerDef, bank: TextureBank): TowerViewLike {
+  return hasPaintedTower(def.id) ? new PaintedTowerView(def, bank) : new TowerView(def, bank);
+}
+
 /**
  * A tower's visual: a stack of sprites (base body + one per gear slot). Gear is swapped by
  * `setGear`; two upgraded paths simply fill different slots, so their gear always combines.
  */
-export class TowerView {
+export class TowerView implements TowerViewLike {
   readonly root = new Container();
   private readonly flip = new Container();
   private readonly body = new Container();

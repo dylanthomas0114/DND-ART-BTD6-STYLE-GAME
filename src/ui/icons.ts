@@ -5,7 +5,7 @@ import type { TowerId, Tiers } from '../core/data/towerTypes';
 import { computeGear } from '../core/upgrades';
 import { GEAR } from '../render/art/gear';
 import { hub } from '../render/hub';
-import { TowerView } from '../render/towerView';
+import { makeTowerView } from '../render/towerView';
 
 const cache = new Map<string, Promise<string>>();
 
@@ -31,7 +31,7 @@ export function towerPortrait(id: TowerId, tiers: Tiers = [0, 0, 0], size = 128)
   let p = cache.get(key);
   if (!p) {
     p = (async () => {
-      const v = new TowerView(TOWERS[id], hub.bank!);
+      const v = makeTowerView(TOWERS[id], hub.bank!);
       v.setGear(computeGear(TOWERS[id], tiers));
       return extract(v.root, size);
     })();

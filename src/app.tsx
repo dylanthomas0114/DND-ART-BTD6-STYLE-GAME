@@ -7,6 +7,7 @@ import { startMapGuide } from './render/mapGuide';
 import { TextureBank } from './render/bake';
 import { hub } from './render/hub';
 import { createPixiApp } from './render/pixiApp';
+import { preloadPainted } from './render/spriteAtlas';
 import { GameScreen } from './ui/GameScreen';
 import { Backdrop, MainMenu, MapSelect, SettingsScreen } from './ui/menus';
 import { screen } from './ui/store';
@@ -53,6 +54,7 @@ async function boot(): Promise<void> {
   const app = await createPixiApp(stage);
   hub.app = app;
   hub.bank = new TextureBank(app, Math.min(2, Math.max(1, window.devicePixelRatio || 1)));
+  await preloadPainted();
   initAudio();
   initLifecycle(() => {
     const s = screen.value;

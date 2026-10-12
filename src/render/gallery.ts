@@ -4,7 +4,8 @@ import type { TowerId, Tiers } from '../core/data/towerTypes';
 import { allValidTiers, computeGear } from '../core/upgrades';
 import { TextureBank } from './bake';
 import { createPixiApp } from './pixiApp';
-import { TowerView } from './towerView';
+import { preloadPainted } from './spriteAtlas';
+import { makeTowerView, type TowerViewLike } from './towerView';
 
 const SHOWCASE: Tiers[] = [
   [0, 0, 0],
@@ -24,6 +25,7 @@ const SHOWCASE: Tiers[] = [
 export async function startGallery(host: HTMLElement, param: string): Promise<void> {
   const app = await createPixiApp(host, 0x6fa64a);
   const bank = new TextureBank(app, 2);
+  await preloadPainted();
   const stage = new Container();
   app.stage.addChild(stage);
   const one = param && param !== '1' && TOWERS[param as TowerId] ? TOWERS[param as TowerId] : null;
@@ -32,7 +34,7 @@ export async function startGallery(host: HTMLElement, param: string): Promise<vo
   const cellW = 150;
   const cellH = 170;
   const cols = one ? 10 : SHOWCASE.length;
-  const views: { id: TowerId; tiers: Tiers; view: TowerView; x: number; y: number }[] = [];
+  const views: { id: TowerId; tiers: Tiers; view: TowerViewLike; x: number; y: number }[] = [];
 
   rows.forEach((def, r) => {
     combos.forEach((tiers, i) => {
@@ -44,7 +46,7 @@ export async function startGallery(host: HTMLElement, param: string): Promise<vo
         .roundRect(x - cellW / 2 + 4, y - cellH + 44, cellW - 8, cellH - 8, 10)
         .fill({ color: 0x4f8a3a, alpha: 0.6 });
       stage.addChild(bg);
-      const v = new TowerView(def, bank);
+      const v = makeTowerView(def, bank);
       v.setGear(computeGear(def, tiers));
       v.root.position.set(x, y);
       stage.addChild(v.root);
@@ -86,7 +88,7 @@ export async function startGallery(host: HTMLElement, param: string): Promise<vo
   const tierDiff = async () => {
     const out: { id: TowerId; path: number; tier: number; diff: number }[] = [];
     const renderPixels = (def: (typeof TOWER_LIST)[number], tiers: Tiers) => {
-      const v = new TowerView(def, bank);
+      const v = makeTowerView(def, bank);
       v.setGear(computeGear(def, tiers));
       const holder = new Container();
       holder.addChild(v.root);

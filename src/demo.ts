@@ -1,6 +1,7 @@
 import type { MapId } from './core/data/maps';
 import type { TowerId, Tiers } from './core/data/towerTypes';
 import { createPixiApp } from './render/pixiApp';
+import { preloadPainted } from './render/spriteAtlas';
 import { GameSession } from './session';
 
 /**
@@ -9,6 +10,7 @@ import { GameSession } from './session';
  */
 export async function startDemo(host: HTMLElement, params: URLSearchParams): Promise<void> {
   const app = await createPixiApp(host);
+  await preloadPainted();
   const mapId = (params.get('demo') || 'glade') as MapId;
   const s = new GameSession(app, {
     mapId: ['glade', 'crypt', 'pass'].includes(mapId) ? mapId : 'glade',

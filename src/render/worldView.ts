@@ -18,7 +18,7 @@ import { Draw } from './art/pen';
 import { FX, PROJECTILES } from './art/projectiles';
 import type { TextureBank } from './bake';
 import { Particles } from './particles';
-import { TowerView } from './towerView';
+import { makeTowerView, type TowerViewLike } from './towerView';
 import { TOWERS } from '../core/data/towers';
 
 const ENEMY_TINT: Record<EnemyId, number> = {
@@ -187,7 +187,7 @@ class EnemyView {
 }
 
 interface TowerEntry {
-  view: TowerView;
+  view: TowerViewLike;
   gearKey: string;
   slotT: Record<string, number>;
   anyT: number;
@@ -773,7 +773,7 @@ export class WorldView {
   private syncTower(t: Tower, dt: number): void {
     let entry = this.towers.get(t.uid);
     if (!entry) {
-      const view = new TowerView(t.def, this.bank);
+      const view = makeTowerView(t.def, this.bank);
       view.root.position.set(t.x, t.y);
       this.actors.addChild(view.root);
       entry = { view, gearKey: '', slotT: {}, anyT: 99, bounce: 0.35 };
@@ -790,7 +790,13 @@ export class WorldView {
     const b = entry.bounce > 0 ? Math.sin((1 - entry.bounce / 0.35) * Math.PI) * 0.18 : 0;
     entry.view.root.scale.set(1 - b * 0.4, 1 + b);
     entry.view.root.zIndex = t.y;
-    entry.view.update(dt, { facing: t.facing, slotT: entry.slotT, anyT: entry.anyT });
+    entry.view.update(dt, {
+      facing: t.facing,
+      slotT: entry.slotT,
+      anyT: entry.anyT,
+      readyIn: t.cooldowns[0],
+      since: t.attackT[0],
+    });
   }
 
   private syncProjectile(s: Sprite, p: Projectile): void {
@@ -808,7 +814,7 @@ export class WorldView {
   private selectedUid: number | null = null;
   private ghost: {
     id: TowerId;
-    view: TowerView;
+    view: TowerViewLike;
     x: number;
     y: number;
     valid: boolean;
@@ -827,7 +833,7 @@ export class WorldView {
     }
     if (!this.ghost || this.ghost.id !== id) {
       this.ghost?.view.root.destroy({ children: true });
-      const view = new TowerView(TOWERS[id], this.bank);
+      const view = makeTowerView(TOWERS[id], this.bank);
       view.setGear(computeGear(TOWERS[id], [0, 0, 0]));
       view.root.alpha = 0.85;
       this.overlay.addChild(view.root);
