@@ -12,3 +12,4 @@ Reference sheet: user-supplied. Excluded design: dual-sword elf (row 2, col 3).
 | ranger gear sheet B | same | same | 2 headdresses, 3 arrows, mantle, harness | 2026-10-12 | $0.183 | art/spike/ranger_gearB_raw.png |
 
 | Canva Magic Design (generate-design, export-design PNG) | none (text only) | single chibi ranger on flat green, test only | 2026-10-13 | cost [U] | `art/spike/canva_ranger_test.png` (1587x2245; background is mid-green, not #00FF00, so the chroma key would eat the cloak; not shipped) |
+| Canva Magic Design strip test (desktop_wallpaper, export PNG) | none (text only) | 6-pose ranger attack strip on magenta | 2026-10-13 | cost [U] | `art/spike/canva_strip_try1.png` (1920x1080). FAILED: 5 figures not 6, only 2 distinct poses (ready, full draw), background #CC2A73 not pure magenta. Character identity was consistent. Not shipped. |
