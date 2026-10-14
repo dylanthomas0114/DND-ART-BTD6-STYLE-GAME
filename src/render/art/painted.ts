@@ -88,6 +88,53 @@ export const PAINTED_BOSSES: Partial<Record<string, PaintedBossSpec>> = {
   },
 };
 
+/** The painted walking bodies regular enemies are built from. */
+export type EnemyChassis = 'skeleton_warrior' | 'skeleton_archer';
+
+export interface PaintedChassisSpec {
+  /** Walk-cycle strip basename under public/assets/painted/ (cut by scripts/cut-walk.mjs). */
+  strip: string;
+  /** Used until this chassis' own strip has been generated. */
+  fallback?: EnemyChassis;
+}
+
+export const PAINTED_CHASSIS: Record<EnemyChassis, PaintedChassisSpec> = {
+  skeleton_warrior: { strip: 'skel_warrior' },
+  skeleton_archer: { strip: 'skel_archer', fallback: 'skeleton_warrior' },
+};
+
+/** Small extras drawn on a painted walker so tiers and immunities read at a glance. */
+export type EnemyMark = 'shadow' | 'frost' | 'ward' | 'iron' | 'bolt' | 'prism' | 'stone';
+
+export interface EnemyLook {
+  chassis: EnemyChassis;
+  /** On-screen height in world units. */
+  height: number;
+  /** Colour multiplied over the painting: the layer colour, kept light so the bones still read. */
+  tint: number;
+  mark?: EnemyMark;
+}
+
+/**
+ * Regular enemies as skeletons. Warriors (sword and shield) are the main line; archers carry the
+ * magical and immune layers. Layer colour follows the old slime ladder so players keep their
+ * muscle memory; size grows with the layer too.
+ */
+export const ENEMY_LOOKS: Partial<Record<string, EnemyLook>> = {
+  green: { chassis: 'skeleton_warrior', height: 56, tint: 0xdbf7c6 },
+  blue: { chassis: 'skeleton_warrior', height: 58, tint: 0xb8deff },
+  amber: { chassis: 'skeleton_warrior', height: 60, tint: 0xffe1a0 },
+  violet: { chassis: 'skeleton_warrior', height: 63, tint: 0xdec1ff },
+  crimson: { chassis: 'skeleton_warrior', height: 65, tint: 0xffb0b0 },
+  shadow: { chassis: 'skeleton_archer', height: 60, tint: 0xc4b7de, mark: 'shadow' },
+  frost: { chassis: 'skeleton_archer', height: 60, tint: 0xe7f7ff, mark: 'frost' },
+  warded: { chassis: 'skeleton_archer', height: 63, tint: 0xe7cfff, mark: 'ward' },
+  iron: { chassis: 'skeleton_warrior', height: 65, tint: 0xd6dae0, mark: 'iron' },
+  storm: { chassis: 'skeleton_archer', height: 63, tint: 0xf4f4f4, mark: 'bolt' },
+  prismatic: { chassis: 'skeleton_archer', height: 65, tint: 0xffa0d0, mark: 'prism' },
+  stone: { chassis: 'skeleton_warrior', height: 72, tint: 0xd9d6cf, mark: 'stone' },
+};
+
 /** Arrows were painted pointing up-right at ~44 degrees; this turns them to point along +x. */
 const ARROW_FIX = 0.77;
 

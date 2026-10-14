@@ -1,4 +1,5 @@
 import type { EnemyId } from '../../core/data/enemies';
+import type { EnemyMark } from './painted';
 import { type Draw, OUTLINE, shade, tint } from './pen';
 import { C } from './palette';
 
@@ -687,4 +688,64 @@ export function drawIceBlock(d: Draw, r: number): void {
   });
   d.line([-r * 0.8, -r * 0.7, -r * 0.4, -r * 0.85], 0xffffff, 3, 0.8);
   d.line([r * 0.5, r * 0.4, r * 0.85, r * 0.2], 0xffffff, 2, 0.6);
+}
+
+/**
+ * Painted walkers: feet at y = +0.32h, head top at y = -0.68h (h = on-screen height). The aura
+ * sits behind the body, the mark in front, so a layer's immunity reads without a label.
+ */
+export function drawWalkerAura(d: Draw, mark: EnemyMark, h: number): void {
+  if (mark === 'shadow') {
+    d.glow(0, -0.18 * h, h * 0.75, 0x6a3aa0, 0.42);
+    for (let i = 0; i < 4; i++)
+      d.p
+        .circle(-0.32 * h + i * 0.2 * h, -0.62 * h - (i % 2) * 0.08 * h, h * 0.06)
+        .fill({ color: 0x4a2a6a, alpha: 0.6 });
+  } else if (mark === 'ward') {
+    d.glow(0, -0.18 * h, h * 0.7, 0xd9b8ff, 0.3);
+    d.p.circle(0, -0.18 * h, h * 0.5).stroke({ width: 2, color: C.gold, alpha: 0.9 });
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      d.p
+        .circle(Math.cos(a) * h * 0.5, -0.18 * h + Math.sin(a) * h * 0.5, h * 0.045)
+        .fill({ color: C.radiant });
+    }
+  }
+}
+
+export function drawWalkerMark(d: Draw, mark: EnemyMark, h: number): void {
+  switch (mark) {
+    case 'frost':
+      for (let i = -2; i <= 2; i++)
+        d.poly(
+          [
+            i * 0.14 * h - 0.05 * h,
+            -0.46 * h + Math.abs(i) * 0.03 * h,
+            i * 0.14 * h,
+            -0.72 * h + Math.abs(i) * 0.06 * h,
+            i * 0.14 * h + 0.05 * h,
+            -0.46 * h + Math.abs(i) * 0.03 * h,
+          ],
+          C.frost,
+          { lw: 1.4 },
+        );
+      break;
+    case 'bolt':
+      d.p
+        .moveTo(0.14 * h, -0.5 * h)
+        .lineTo(0.26 * h, -0.64 * h)
+        .lineTo(0.19 * h, -0.62 * h)
+        .lineTo(0.3 * h, -0.78 * h)
+        .stroke({ width: 2.5, color: C.radiant, cap: 'round' });
+      break;
+    case 'iron':
+      d.rrect(-0.3 * h, -0.2 * h, 0.2 * h, 0.1 * h, 2, C.steelDark, { lw: 1.4 });
+      d.rrect(0.1 * h, -0.2 * h, 0.2 * h, 0.1 * h, 2, C.steelDark, { lw: 1.4 });
+      break;
+    case 'stone':
+      d.ellipse(-0.06 * h, -0.58 * h, 0.14 * h, 0.05 * h, 0x6f9a4a, { lw: 1.2 });
+      break;
+    default:
+      break;
+  }
 }

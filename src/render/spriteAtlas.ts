@@ -1,5 +1,11 @@
 import { Assets, Rectangle, Texture } from 'pixi.js';
-import { PAINTED_BOSSES, PAINTED_TOWERS } from './art/painted';
+import {
+  type EnemyChassis,
+  PAINTED_BOSSES,
+  PAINTED_CHASSIS,
+  PAINTED_TOWERS,
+  type PaintedChassisSpec,
+} from './art/painted';
 
 /** Per-frame metadata written by scripts/cut-strip.mjs. */
 export interface StripMeta {
@@ -90,6 +96,7 @@ export function preloadPainted(): Promise<void> {
       for (const g of spec.gearAtlases) jobs.push(loadGear(g));
     }
     for (const spec of Object.values(PAINTED_BOSSES)) if (spec) jobs.push(loadBoss(spec.image));
+    for (const spec of Object.values(PAINTED_CHASSIS)) jobs.push(loadStrip(spec.strip));
     await Promise.allSettled(jobs);
   })();
   return started;
@@ -105,4 +112,16 @@ export function hasPaintedTower(id: string): boolean {
 export function paintedBossTexture(id: string): Texture | null {
   const spec = PAINTED_BOSSES[id];
   return (spec && painted.bosses.get(spec.image)) || null;
+}
+
+/** The walk strip for a chassis, following its fallback chain; null when nothing is loaded. */
+export function walkerStrip(chassis: EnemyChassis): Strip | null {
+  let next: EnemyChassis | undefined = chassis;
+  for (let i = 0; next && i < 4; i++) {
+    const spec: PaintedChassisSpec = PAINTED_CHASSIS[next];
+    const strip = painted.strips.get(spec.strip);
+    if (strip) return strip;
+    next = spec.fallback;
+  }
+  return null;
 }

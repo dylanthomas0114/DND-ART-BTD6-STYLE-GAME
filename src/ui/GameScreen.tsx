@@ -44,7 +44,7 @@ interface Placing {
 
 const TUTORIAL = [
   { text: 'Drag a <b>Ranger</b> from the shop onto the grass beside the road.', at: 'shop' },
-  { text: 'Tap <b>▶</b> to send the first wave of slimes!', at: 'go' },
+  { text: 'Tap <b>▶</b> to send the first wave of skeletons!', at: 'go' },
   { text: 'Nice! <b>Tap your Ranger</b> to see its upgrades.', at: 'map' },
   { text: 'Every upgrade gives your hero <b>new gear</b>. Buy one!', at: 'upg' },
 ] as const;

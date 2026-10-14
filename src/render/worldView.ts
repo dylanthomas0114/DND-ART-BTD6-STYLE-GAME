@@ -11,9 +11,11 @@ import {
   drawEnemy,
   drawIceBlock,
   drawRegenOverlay,
+  drawWalkerAura,
+  drawWalkerMark,
 } from './art/enemies';
 import { drawShadow } from './art/bodies';
-import { PAINTED_BOSSES } from './art/painted';
+import { ENEMY_LOOKS, type EnemyLook, PAINTED_BOSSES } from './art/painted';
 import { drawDecor, drawMapGround, drawRoads, MAP_MARGIN_X, MAP_MARGIN_Y, scatterDecor } from './art/mapArt';
 import { DTYPE_COLOR } from './art/palette';
 import { Draw } from './art/pen';
@@ -21,7 +23,8 @@ import { FX, PROJECTILES } from './art/projectiles';
 import type { TextureBank } from './bake';
 import { PaintedBossBody } from './paintedBoss';
 import { Particles } from './particles';
-import { paintedBossTexture } from './spriteAtlas';
+import { paintedBossTexture, type Strip, walkerStrip } from './spriteAtlas';
+import { cyclesPerSecond, hueTint, walkFrame } from './walkCycle';
 import { makeTowerView, type TowerViewLike } from './towerView';
 import { TOWERS } from '../core/data/towers';
 
@@ -58,6 +61,10 @@ class EnemyView {
   /** Whatever is currently the body: the sprite, or the painted boss mesh. */
   body: Sprite | MeshPlane;
   private rig: PaintedBossBody | null = null;
+  /** A painted skeleton walker: its look, strip and world-units-per-pixel scale. */
+  private walker: { look: EnemyLook; strip: Strip; s: number } | null = null;
+  private aura: Sprite | null = null;
+  private mark: Sprite | null = null;
   private shadow: Sprite | null = null;
   private clock = 0;
   private lastT = -1;
@@ -82,7 +89,7 @@ class EnemyView {
     this.type = t;
     const r = visualRadius(t);
     this.setPaintedBody(t);
-    if (!this.rig) {
+    if (!this.rig && !this.walker) {
       const b = this.wv.bank.get(`enemy:${t}`, (d) => drawEnemy(d, t, r), BOSSES[t] ? 3 : 2.5);
       this.sprite.texture = b.texture;
       this.sprite.anchor.set(b.ax, b.ay);
@@ -98,7 +105,17 @@ class EnemyView {
     }
   }
 
-  /** Swaps between the painted boss mesh and the baked sprite for this enemy id. */
+  private setShadow(key: string, rx: number, ry: number): void {
+    const sb = this.wv.bank.get(key, (d) => drawShadow(d, rx, ry));
+    if (!this.shadow) {
+      this.shadow = new Sprite();
+      this.root.addChildAt(this.shadow, 0);
+    }
+    this.shadow.texture = sb.texture;
+    this.shadow.anchor.set(sb.ax, sb.ay);
+  }
+
+  /** Picks the body for an enemy id: painted boss mesh, painted skeleton walker, or baked vector. */
   private setPaintedBody(t: EnemyId): void {
     const tex = paintedBossTexture(t);
     const spec = PAINTED_BOSSES[t];
@@ -106,23 +123,47 @@ class EnemyView {
       this.rig.mesh.destroy();
       this.rig = null;
     }
-    if (!tex || !spec) {
-      this.shadow?.destroy();
-      this.shadow = null;
-      this.sprite.visible = true;
-      this.body = this.sprite;
+    this.walker = null;
+    this.aura?.destroy();
+    this.aura = null;
+    this.mark?.destroy();
+    this.mark = null;
+    if (tex && spec) {
+      this.rig = new PaintedBossBody(spec, tex);
+      this.sprite.visible = false;
+      this.setShadow('shadow:boss', 46, 10);
+      this.body = this.rig.mesh;
+      this.root.addChildAt(this.rig.mesh, 1);
       return;
     }
-    this.rig = new PaintedBossBody(spec, tex);
-    this.sprite.visible = false;
-    if (!this.shadow) {
-      const sb = this.wv.bank.get('shadow:boss', (d) => drawShadow(d, 46, 10));
-      this.shadow = new Sprite(sb.texture);
-      this.shadow.anchor.set(sb.ax, sb.ay);
-      this.root.addChildAt(this.shadow, 0);
+    const look = ENEMY_LOOKS[t];
+    const strip = look && !ENEMIES[t].boss ? walkerStrip(look.chassis) : null;
+    if (look && strip) {
+      const figH = strip.meta.cellH - 8;
+      this.walker = { look, strip, s: look.height / figH };
+      this.sprite.visible = true;
+      this.sprite.texture = strip.frames[0]!;
+      this.sprite.anchor.set(strip.meta.pivotX, strip.meta.baselineY / strip.meta.cellH);
+      this.body = this.sprite;
+      this.setShadow(`shadow:walker:${look.height}`, look.height * 0.3, look.height * 0.1);
+      const mk = look.mark;
+      if (mk === 'shadow' || mk === 'ward') {
+        const b = this.wv.bank.get(`ov:aura:${mk}:${look.height}`, (d) => drawWalkerAura(d, mk, look.height));
+        this.aura = new Sprite(b.texture);
+        this.aura.anchor.set(b.ax, b.ay);
+        this.root.addChildAt(this.aura, 1);
+      } else if (mk && mk !== 'prism') {
+        const b = this.wv.bank.get(`ov:mark:${mk}:${look.height}`, (d) => drawWalkerMark(d, mk, look.height));
+        this.mark = new Sprite(b.texture);
+        this.mark.anchor.set(b.ax, b.ay);
+        this.root.addChild(this.mark);
+      }
+      return;
     }
-    this.body = this.rig.mesh;
-    this.root.addChildAt(this.rig.mesh, 1);
+    this.shadow?.destroy();
+    this.shadow = null;
+    this.sprite.visible = true;
+    this.body = this.sprite;
   }
 
   private overlay(
@@ -174,6 +215,28 @@ class EnemyView {
       if (this.shadow) this.shadow.y = ground;
       hpTop = rig.spec.height - ground + 14;
       cy = this.body.y - rig.spec.height * 0.4;
+    } else if (this.walker) {
+      // painted skeleton: a real walk cycle, paced by speed, frozen when frozen
+      const { look, strip, s } = this.walker;
+      const dt = this.lastT < 0 ? 0 : Math.min(0.1, t - this.lastT);
+      this.lastT = t;
+      if (moving) {
+        const speed = def.speed * e.speedMult * e.slowMult;
+        this.clock += dt * cyclesPerSecond(speed, ENEMIES.green.speed);
+      }
+      this.sprite.texture = strip.frames[walkFrame(this.clock + e.uid * 0.37, strip.meta.frames)]!;
+      const ground = look.height * 0.32;
+      this.body.scale.set((right ? 1 : -1) * (1 + hitK * 0.12) * s, (1 - hitK * 0.1) * s);
+      this.body.y = ground;
+      this.body.rotation = 0;
+      if (this.shadow) this.shadow.y = ground;
+      for (const extra of [this.aura, this.mark]) {
+        if (!extra) continue;
+        extra.scale.x = right ? 1 : -1;
+        extra.y = 0;
+      }
+      hpTop = look.height * 0.68 + 14;
+      cy = ground - look.height * 0.5;
     } else {
       this.body.scale.set(right ? sx : -sx, sy);
       this.body.y = boss ? -Math.abs(Math.sin(phase)) * 2 : -hop * r * 0.35;
@@ -182,6 +245,8 @@ class EnemyView {
     }
     // status tints
     let tint = 0xffffff;
+    if (this.walker)
+      tint = this.walker.look.mark === 'prism' ? hueTint(t * 0.25 + e.uid * 0.13) : this.walker.look.tint;
     if (e.slowT > 0) tint = 0xb8ecff;
     if (e.burnT > 0) tint = 0xffc49a;
     if (hitK > 0.5) tint = 0xffffff;

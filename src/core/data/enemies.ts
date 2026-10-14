@@ -40,62 +40,62 @@ export interface EnemyDef {
   blurb: string;
 }
 
-const BASE = 85; // speed of the weakest slime (world units / s)
+const BASE = 85; // speed of the weakest skeleton (world units / s)
 
 export const ENEMIES: Record<EnemyId, EnemyDef> = {
   green: {
     id: 'green',
-    name: 'Green Slime',
+    name: 'Green Skeleton',
     hp: 1,
     speed: BASE,
     radius: 13,
     immune: [],
     children: [],
-    blurb: 'A wobbling blob of goo. One hit pops it.',
+    blurb: 'A rattling skeleton in a rusty helm. One hit shatters it.',
   },
   blue: {
     id: 'blue',
-    name: 'Blue Slime',
+    name: 'Blue Skeleton',
     hp: 1,
     speed: BASE * 1.4,
     radius: 14,
     immune: [],
     children: [{ id: 'green', count: 1 }],
-    blurb: 'Pops into a Green Slime.',
+    blurb: 'Pops into a Green Skeleton.',
   },
   amber: {
     id: 'amber',
-    name: 'Amber Slime',
+    name: 'Amber Skeleton',
     hp: 1,
     speed: BASE * 1.8,
     radius: 15,
     immune: [],
     children: [{ id: 'blue', count: 1 }],
-    blurb: 'Pops into a Blue Slime.',
+    blurb: 'Pops into a Blue Skeleton.',
   },
   violet: {
     id: 'violet',
-    name: 'Violet Slime',
+    name: 'Violet Skeleton',
     hp: 1,
     speed: BASE * 2.5,
     radius: 15,
     immune: [],
     children: [{ id: 'amber', count: 1 }],
-    blurb: 'Fast. Pops into an Amber Slime.',
+    blurb: 'Fast. Pops into an Amber Skeleton.',
   },
   crimson: {
     id: 'crimson',
-    name: 'Crimson Slime',
+    name: 'Crimson Skeleton',
     hp: 1,
     speed: BASE * 2.8,
     radius: 15,
     immune: [],
     children: [{ id: 'violet', count: 1 }],
-    blurb: 'Very fast. Pops into a Violet Slime.',
+    blurb: 'Very fast. Pops into a Violet Skeleton.',
   },
   shadow: {
     id: 'shadow',
-    name: 'Shadow Ooze',
+    name: 'Shadow Skeleton',
     hp: 1,
     speed: BASE * 1.8,
     radius: 11,
@@ -105,7 +105,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   },
   frost: {
     id: 'frost',
-    name: 'Frost Ooze',
+    name: 'Frost Skeleton',
     hp: 1,
     speed: BASE * 2.0,
     radius: 11,
@@ -115,7 +115,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   },
   warded: {
     id: 'warded',
-    name: 'Warded Ooze',
+    name: 'Warded Skeleton',
     hp: 1,
     speed: BASE * 2.5,
     radius: 12,
@@ -125,7 +125,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   },
   iron: {
     id: 'iron',
-    name: 'Iron Ooze',
+    name: 'Iron Skeleton',
     hp: 1,
     speed: BASE,
     radius: 15,
@@ -136,7 +136,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   },
   storm: {
     id: 'storm',
-    name: 'Storm Ooze',
+    name: 'Storm Skeleton',
     hp: 1,
     speed: BASE * 1.8,
     radius: 15,
@@ -149,7 +149,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   },
   prismatic: {
     id: 'prismatic',
-    name: 'Prismatic Ooze',
+    name: 'Prismatic Skeleton',
     hp: 1,
     speed: BASE * 2.2,
     radius: 16,
@@ -159,7 +159,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   },
   stone: {
     id: 'stone',
-    name: 'Stone Ooze',
+    name: 'Stone Skeleton',
     hp: 10,
     speed: BASE * 2.5,
     radius: 17,
@@ -178,7 +178,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     children: [{ id: 'stone', count: 4 }],
     boss: true,
     shell: true,
-    blurb: 'A snarling young drake. Bursts into 4 Stone Oozes.',
+    blurb: 'A snarling young drake. Bursts into 4 Stone Skeletons.',
   },
   troll: {
     id: 'troll',

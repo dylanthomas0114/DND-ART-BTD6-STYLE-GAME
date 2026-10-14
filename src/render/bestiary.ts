@@ -7,11 +7,14 @@ import {
   drawEnemy,
   drawIceBlock,
   drawRegenOverlay,
+  drawWalkerAura,
+  drawWalkerMark,
 } from './art/enemies';
-import { PAINTED_BOSSES } from './art/painted';
+import { ENEMY_LOOKS, PAINTED_BOSSES } from './art/painted';
 import { TextureBank } from './bake';
 import { createPixiApp } from './pixiApp';
-import { paintedBossTexture, preloadPainted } from './spriteAtlas';
+import { paintedBossTexture, preloadPainted, walkerStrip } from './spriteAtlas';
+import { hueTint } from './walkCycle';
 
 /** `?bestiary`: every enemy with its modifiers, for art review. */
 export async function startBestiary(host: HTMLElement): Promise<void> {
@@ -36,6 +39,26 @@ export async function startBestiary(host: HTMLElement): Promise<void> {
     parent.addChild(s);
     return s;
   };
+  /** A painted skeleton in its mid-stride frame, with layer colour and immunity marks. */
+  const walker = (id: (typeof ENEMY_IDS)[number], parent: Container, alpha: number): boolean => {
+    const look = ENEMY_LOOKS[id];
+    const strip = look && walkerStrip(look.chassis);
+    if (!look || !strip) return false;
+    const h = look.height;
+    const mark = look.mark;
+    if (mark === 'shadow' || mark === 'ward')
+      add(`ov:aura:${mark}:${h}`, (d) => drawWalkerAura(d, mark, h), 0, 0, parent, alpha);
+    const sp = new Sprite(strip.frames[1]);
+    sp.anchor.set(strip.meta.pivotX, strip.meta.baselineY / strip.meta.cellH);
+    sp.scale.set(h / (strip.meta.cellH - 8));
+    sp.y = h * 0.32;
+    sp.tint = mark === 'prism' ? hueTint(0.9) : look.tint;
+    sp.alpha = alpha;
+    parent.addChild(sp);
+    if (mark && mark !== 'shadow' && mark !== 'ward' && mark !== 'prism')
+      add(`ov:mark:${mark}:${h}`, (d) => drawWalkerMark(d, mark, h), 0, 0, parent, alpha);
+    return true;
+  };
   const slimes = ENEMY_IDS.filter((id) => !BOSSES[id]);
   const bosses = ENEMY_IDS.filter((id) => BOSSES[id]);
   slimes.forEach((id, i) => {
@@ -53,14 +76,15 @@ export async function startBestiary(host: HTMLElement): Promise<void> {
       const c = new Container();
       c.position.set(x, y);
       stage.addChild(c);
-      add(`enemy:${id}`, (d) => drawEnemy(d, id, r), 0, 0, c, v === 'invisible' ? 0.45 : 1);
+      const a = v === 'invisible' ? 0.45 : 1;
+      if (!walker(id, c, a)) add(`enemy:${id}`, (d) => drawEnemy(d, id, r), 0, 0, c, a);
       if (v === 'regen') add(`ov:regen:${r}`, (d) => drawRegenOverlay(d, r), 0, 0, c);
       if (v === 'armored') add(`ov:armor:slime:${r}`, (d) => drawArmorOverlay(d, r, false), 0, 0, c);
       if (v === 'frozen') add(`ov:ice:${r}`, (d) => drawIceBlock(d, r), 0, 0, c);
       if (v === 'cracked') add(`ov:crack:${id}:2`, (d) => drawCracks(d, r, 2), 0, 0, c);
     }
     const t = new Text({
-      text: ENEMIES[id].name.replace(' Slime', '').replace(' Ooze', ''),
+      text: ENEMIES[id].name.replace(' Skeleton', ''),
       style: { fontFamily: 'sans-serif', fontSize: 13, fill: 0x1d1410 },
     });
     t.anchor.set(0.5, 0);

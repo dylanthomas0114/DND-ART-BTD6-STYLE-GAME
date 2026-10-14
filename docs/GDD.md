@@ -10,21 +10,21 @@ Place towers → start a round → enemies follow the road → popping layers ea
 
 ## Enemies (`src/core/data/enemies.ts`)
 
-| Enemy                                         | Plays the role of     | Notes                                  |
-| --------------------------------------------- | --------------------- | -------------------------------------- |
-| Green → Blue → Amber → Violet → Crimson Slime | basic layers          | speed rises with each layer            |
-| Shadow Ooze                                   | black                 | immune to blast and fire               |
-| Frost Ooze                                    | white                 | immune to cold                         |
-| Warded Ooze                                   | purple                | immune to arcane, fire and radiant     |
-| Iron Ooze                                     | lead                  | immune to piercing and slashing        |
-| Storm Ooze                                    | zebra                 | immune to blast and cold               |
-| Prismatic Ooze                                | rainbow               |                                        |
-| Stone Ooze                                    | ceramic               | 10 HP shell                            |
-| Drake Whelp                                   | boss tier 1           | spills 4 Stone                         |
-| Troll Chieftain                               | boss tier 2           | releases 4 Drake Whelps                |
-| Stone Giant                                   | boss tier 3           | releases 4 Trolls                      |
-| Lich Wraith                                   | fast invisible boss   | immune to piercing, slashing and blast |
-| Ancient Dragon                                | final boss (freeplay) | releases 2 Giants and 3 Liches         |
+| Enemy                                            | Plays the role of     | Notes                                  |
+| ------------------------------------------------ | --------------------- | -------------------------------------- |
+| Green → Blue → Amber → Violet → Crimson Skeleton | basic layers          | speed rises with each layer            |
+| Shadow Skeleton                                  | black                 | immune to blast and fire               |
+| Frost Skeleton                                   | white                 | immune to cold                         |
+| Warded Skeleton                                  | purple                | immune to arcane, fire and radiant     |
+| Iron Skeleton                                    | lead                  | immune to piercing and slashing        |
+| Storm Skeleton                                   | zebra                 | immune to blast and cold               |
+| Prismatic Skeleton                               | rainbow               |                                        |
+| Stone Skeleton                                   | ceramic               | 10 HP shell                            |
+| Drake Whelp                                      | boss tier 1           | spills 4 Stone                         |
+| Troll Chieftain                                  | boss tier 2           | releases 4 Drake Whelps                |
+| Stone Giant                                      | boss tier 3           | releases 4 Trolls                      |
+| Lich Wraith                                      | fast invisible boss   | immune to piercing, slashing and blast |
+| Ancient Dragon                                   | final boss (freeplay) | releases 2 Giants and 3 Liches         |
 
 Modifiers: **Invisible** (needs True Sight), **Regenerating** (regrows layers after 2.5 s without damage), **Armored** (shells have double HP).
 
