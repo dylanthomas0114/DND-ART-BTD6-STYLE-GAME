@@ -20,8 +20,8 @@ Place towers → start a round → enemies follow the road → popping layers ea
 | Storm Ooze                                    | zebra                 | immune to blast and cold               |
 | Prismatic Ooze                                | rainbow               |                                        |
 | Stone Ooze                                    | ceramic               | 10 HP shell                            |
-| Ogre Brute                                    | boss tier 1           | spills 4 Stone                         |
-| Troll Chieftain                               | boss tier 2           | releases 4 Ogres                       |
+| Drake Whelp                                   | boss tier 1           | spills 4 Stone                         |
+| Troll Chieftain                               | boss tier 2           | releases 4 Drake Whelps                |
 | Stone Giant                                   | boss tier 3           | releases 4 Trolls                      |
 | Lich Wraith                                   | fast invisible boss   | immune to piercing, slashing and blast |
 | Ancient Dragon                                | final boss (freeplay) | releases 2 Giants and 3 Liches         |

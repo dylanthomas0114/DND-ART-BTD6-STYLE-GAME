@@ -1,5 +1,5 @@
 import { Assets, Rectangle, Texture } from 'pixi.js';
-import { PAINTED_TOWERS } from './art/painted';
+import { PAINTED_BOSSES, PAINTED_TOWERS } from './art/painted';
 
 /** Per-frame metadata written by scripts/cut-strip.mjs. */
 export interface StripMeta {
@@ -28,6 +28,8 @@ const BASE = './assets/painted/';
 export const painted = {
   strips: new Map<string, Strip>(),
   gear: new Map<string, GearItem>(),
+  /** Whole-image boss paintings, by PNG basename. */
+  bosses: new Map<string, Texture>(),
 };
 
 async function fetchJson<T>(url: string): Promise<T | null> {
@@ -69,6 +71,14 @@ async function loadGear(name: string): Promise<void> {
   }
 }
 
+async function loadBoss(name: string): Promise<void> {
+  try {
+    painted.bosses.set(name, await Assets.load<Texture>(`${BASE}${name}.png`));
+  } catch {
+    // missing art just keeps the code-drawn boss
+  }
+}
+
 let started: Promise<void> | null = null;
 
 /** Loads every painted asset once. Never rejects: any failure just leaves the vector art in use. */
@@ -79,6 +89,7 @@ export function preloadPainted(): Promise<void> {
       jobs.push(loadStrip(spec.strip));
       for (const g of spec.gearAtlases) jobs.push(loadGear(g));
     }
+    for (const spec of Object.values(PAINTED_BOSSES)) if (spec) jobs.push(loadBoss(spec.image));
     await Promise.allSettled(jobs);
   })();
   return started;
@@ -88,4 +99,10 @@ export function preloadPainted(): Promise<void> {
 export function hasPaintedTower(id: string): boolean {
   const spec = PAINTED_TOWERS[id];
   return !!spec && painted.strips.has(spec.strip);
+}
+
+/** The painted texture for a boss id, or null when it should be code-drawn. */
+export function paintedBossTexture(id: string): Texture | null {
+  const spec = PAINTED_BOSSES[id];
+  return (spec && painted.bosses.get(spec.image)) || null;
 }

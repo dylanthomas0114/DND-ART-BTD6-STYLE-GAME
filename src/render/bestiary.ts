@@ -8,12 +8,15 @@ import {
   drawIceBlock,
   drawRegenOverlay,
 } from './art/enemies';
+import { PAINTED_BOSSES } from './art/painted';
 import { TextureBank } from './bake';
 import { createPixiApp } from './pixiApp';
+import { paintedBossTexture, preloadPainted } from './spriteAtlas';
 
 /** `?bestiary`: every enemy with its modifiers, for art review. */
 export async function startBestiary(host: HTMLElement): Promise<void> {
   const app = await createPixiApp(host, 0xc9a46b);
+  await preloadPainted();
   const bank = new TextureBank(app, 2);
   const stage = new Container();
   app.stage.addChild(stage);
@@ -67,7 +70,15 @@ export async function startBestiary(host: HTMLElement): Promise<void> {
   bosses.forEach((id, i) => {
     const r = Math.round(ENEMIES[id].radius * 1.15);
     const x = 140 + i * 260;
-    add(`enemy:${id}`, (d) => drawEnemy(d, id, r), x, 720);
+    const tex = paintedBossTexture(id);
+    const spec = PAINTED_BOSSES[id];
+    if (tex && spec) {
+      const s = new Sprite(tex);
+      s.anchor.set(0.5, spec.pivotY);
+      s.scale.set((spec.height / tex.height) * -spec.faces, spec.height / tex.height);
+      s.position.set(x, 750);
+      stage.addChild(s);
+    } else add(`enemy:${id}`, (d) => drawEnemy(d, id, r), x, 720);
     const t = new Text({
       text: ENEMIES[id].name,
       style: { fontFamily: 'sans-serif', fontSize: 15, fill: 0x1d1410 },

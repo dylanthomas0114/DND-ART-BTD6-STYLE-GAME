@@ -33,6 +33,61 @@ export interface PaintedTowerSpec {
   gear: Record<string, PaintedGear>;
 }
 
+/**
+ * Mesh rig for a painted boss that is one flat image. Every position is a fraction of the image
+ * (u across, v down); every amplitude is a fraction of the image height. The pose function in
+ * `bossRig.ts` bends the image with these, so wings flap, the tail sways and the feet step
+ * without cutting the painting into pieces.
+ */
+export interface BossRig {
+  cols: number;
+  rows: number;
+  /** Wing: moves everything right of `u0` and above `rootV`, more towards the tip. */
+  wing: { u0: number; u1: number; v0: number; rootV: number; amp: number; rate: number };
+  /** Tail: a travelling wave that grows towards the tip (right of `u0`). */
+  tail: { u0: number; amp: number; rate: number; wave: number };
+  /** Head: a small counter-bob left of `u1`. */
+  head: { u1: number; amp: number };
+  /** Feet: lifted alternately below `v0` as the boss strides. */
+  feet: { v0: number; amp: number };
+}
+
+export interface PaintedBossSpec {
+  /** PNG basename under public/assets/painted/. */
+  image: string;
+  /** On-screen height in world units (1600x900 world). */
+  height: number;
+  /** +1 when the art faces right, -1 when it faces left. */
+  faces: 1 | -1;
+  /** Feet line as a fraction of the image height (the sprite pivot). */
+  pivotY: number;
+  /** Radians of stride per world unit walked. */
+  stride: number;
+  rig: BossRig;
+}
+
+/**
+ * Painted bosses, keyed by the enemy id whose look they replace. The first boss slot (`ogre`)
+ * is the drake whelp; every boss without an entry keeps its code-drawn art.
+ */
+export const PAINTED_BOSSES: Partial<Record<string, PaintedBossSpec>> = {
+  ogre: {
+    image: 'whelp',
+    height: 150,
+    faces: -1,
+    pivotY: 0.97,
+    stride: 0.09,
+    rig: {
+      cols: 14,
+      rows: 10,
+      wing: { u0: 0.52, u1: 0.97, v0: 0.18, rootV: 0.52, amp: 0.06, rate: 9 },
+      tail: { u0: 0.72, amp: 0.045, rate: 4, wave: 5 },
+      head: { u1: 0.4, amp: 0.012 },
+      feet: { v0: 0.8, amp: 0.04 },
+    },
+  },
+};
+
 /** Arrows were painted pointing up-right at ~44 degrees; this turns them to point along +x. */
 const ARROW_FIX = 0.77;
 

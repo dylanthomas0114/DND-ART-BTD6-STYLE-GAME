@@ -19,7 +19,7 @@ export const DIFFICULTIES: Record<DifficultyId, DifficultyDef> = {
     costMult: 0.85,
     finalRound: 40,
     startCash: 650,
-    finale: 'Ogre Brute',
+    finale: 'Drake Whelp',
   },
   medium: {
     id: 'medium',

@@ -170,7 +170,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
   },
   ogre: {
     id: 'ogre',
-    name: 'Ogre Brute',
+    name: 'Drake Whelp',
     hp: 200,
     speed: BASE * 0.8,
     radius: 38,
@@ -178,7 +178,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     children: [{ id: 'stone', count: 4 }],
     boss: true,
     shell: true,
-    blurb: 'Hauls a cauldron of 4 Stone Oozes.',
+    blurb: 'A snarling young drake. Bursts into 4 Stone Oozes.',
   },
   troll: {
     id: 'troll',
@@ -190,7 +190,7 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     children: [{ id: 'ogre', count: 4 }],
     boss: true,
     shell: true,
-    blurb: 'Slow and huge. Releases 4 Ogres.',
+    blurb: 'Slow and huge. Releases 4 Drake Whelps.',
   },
   giant: {
     id: 'giant',

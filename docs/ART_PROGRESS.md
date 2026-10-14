@@ -8,6 +8,8 @@ Plan: `/root/.claude/plans/declarative-napping-pinwheel.md` (merged vertical-sli
 - Excluded design: dual-sword elf (row 2, col 3 + small version). Only `art/reference/sheet_sanitized.png` (elf painted out) may be sent to generators.
 - Towers are stationary: idle/attack clips only. Walk clips are for enemies.
 - Barbarian/Warlock gameplay deferred until the existing roster passes the gates.
+- Image route in use: Canva single hero images (no reference image, so no consistent frame strips). Animation is done in code. ElevenLabs (reference images, strips) is only usable when its free-tier daily image limit has reset; Hugging Face needs an `HF_TOKEN` env secret.
+- Enemy direction (user, 2026-10-14): the drake whelp is a **boss** (there will be several boss types). The regular enemies become **skeletons**: a sword-and-shield skeleton (the main enemy) and a skeleton archer. Whelp sits on the first boss slot (id `ogre`, now named Drake Whelp); ids, stats and rounds are unchanged.
 
 ## Spend (cap $18; price is last observed, not guaranteed)
 
@@ -25,13 +27,21 @@ Plan: `/root/.claude/plans/declarative-napping-pinwheel.md` (merged vertical-sli
 - Done: painted Ranger body clip + separate bow layer + painted gear (13 of 20 Ranger pieces, plus 2 tinted-variant bows); sim-driven anticipation/release timing; all 135 tiers still pixel-diff distinct (e2e).
 - Missing art (blocked by quota): 4 companions (wolfpup, direwolf, owlbear, owlbear_elder) stay vector; mask_deadeye stays vector; bow_storm/bow_sun are tinted bow_long; whelp drake, Glade terrain, UI frames, portrait polish.
 
+## Whelp boss (done)
+
+- `public/assets/painted/whelp.png` (512x343, from the clean Canva cut; facing left). `PAINTED_BOSSES` in `src/render/art/painted.ts`, rig maths in `src/render/bossRig.ts` (pure, tested), Pixi mesh in `src/render/paintedBoss.ts`, integration in `EnemyView` (`worldView.ts`) with the code-drawn boss as fallback.
+- The painting is bent with a 14x10 mesh: wing flap, tail wave, head nod and alternating foot lifts driven by distance walked. Frozen enemies stop; stunned ones idle. Hit squash, status tints, ice, armor and crack overlays still apply.
+- Phone-size check (915x412 @ DPR 2, swiftshader, no towers so it walks the road): `docs/shots/whelp_boss_phone.png`.
+
 ## Files changed
 
 - `art/reference/sheet_sanitized.png`, `art/spike/*`, `scripts/cut-strip.mjs`, this doc.
+- Whelp boss: `src/render/{bossRig,paintedBoss,spriteAtlas,bestiary,worldView}.ts`, `src/render/art/painted.ts`, `tests/unit/bossRig.test.ts`, display names in `src/core/data/{enemies,difficulty}.ts` and `docs/GDD.md`.
 
 ## Checks run
 
-- lint, typecheck, `npm test` (122 pass incl. clip timing), `npm run build`, `npm run e2e` (4 pass, Pixel 7 emulation, swiftshader): all green at commit 0154890.
+- Whelp boss commit: lint (only the untracked plugin file is flagged by prettier), typecheck, `npm test` 127 pass, `npm run build`, `npm run e2e` 4 pass (Pixel 7 emulation). `sim:balance` not re-run: no simulation change, only display text.
+- Earlier: lint, typecheck, `npm test` (122 pass incl. clip timing), `npm run build`, `npm run e2e` (4 pass, Pixel 7 emulation, swiftshader): all green at commit 0154890.
 - Not run yet: sim:balance (no sim change), perf stress with painted assets, phone-size crowded-wave review (G1), device test.
 
 ## Blockers / open questions

@@ -1,4 +1,4 @@
-import { type Application, Assets, Container, Graphics, Sprite, type Texture } from 'pixi.js';
+import { type Application, Assets, Container, Graphics, type MeshPlane, Sprite, type Texture } from 'pixi.js';
 import { ENEMIES, type EnemyId } from '../core/data/enemies';
 import type { TowerId } from '../core/data/towerTypes';
 import type { Enemy, Game, Projectile, Tower } from '../core/game';
@@ -12,12 +12,16 @@ import {
   drawIceBlock,
   drawRegenOverlay,
 } from './art/enemies';
+import { drawShadow } from './art/bodies';
+import { PAINTED_BOSSES } from './art/painted';
 import { drawDecor, drawMapGround, drawRoads, MAP_MARGIN_X, MAP_MARGIN_Y, scatterDecor } from './art/mapArt';
 import { DTYPE_COLOR } from './art/palette';
 import { Draw } from './art/pen';
 import { FX, PROJECTILES } from './art/projectiles';
 import type { TextureBank } from './bake';
+import { PaintedBossBody } from './paintedBoss';
 import { Particles } from './particles';
+import { paintedBossTexture } from './spriteAtlas';
 import { makeTowerView, type TowerViewLike } from './towerView';
 import { TOWERS } from '../core/data/towers';
 
@@ -49,7 +53,14 @@ function visualRadius(t: EnemyId): number {
 
 class EnemyView {
   readonly root = new Container();
-  readonly body: Sprite;
+  /** The vector/baked sprite; hidden while a painted boss mesh is in use. */
+  readonly sprite: Sprite;
+  /** Whatever is currently the body: the sprite, or the painted boss mesh. */
+  body: Sprite | MeshPlane;
+  private rig: PaintedBossBody | null = null;
+  private shadow: Sprite | null = null;
+  private clock = 0;
+  private lastT = -1;
   private overlays: Record<string, Sprite | undefined> = {};
   private crackStage = -1;
   type: EnemyId;
@@ -61,17 +72,21 @@ class EnemyView {
     e: Enemy,
   ) {
     this.type = e.type;
-    this.body = new Sprite();
-    this.root.addChild(this.body);
+    this.sprite = new Sprite();
+    this.body = this.sprite;
+    this.root.addChild(this.sprite);
     this.setType(e.type);
   }
 
   setType(t: EnemyId): void {
     this.type = t;
     const r = visualRadius(t);
-    const b = this.wv.bank.get(`enemy:${t}`, (d) => drawEnemy(d, t, r), BOSSES[t] ? 3 : 2.5);
-    this.body.texture = b.texture;
-    this.body.anchor.set(b.ax, b.ay);
+    this.setPaintedBody(t);
+    if (!this.rig) {
+      const b = this.wv.bank.get(`enemy:${t}`, (d) => drawEnemy(d, t, r), BOSSES[t] ? 3 : 2.5);
+      this.sprite.texture = b.texture;
+      this.sprite.anchor.set(b.ax, b.ay);
+    }
     for (const k of Object.keys(this.overlays)) {
       this.overlays[k]?.destroy();
       this.overlays[k] = undefined;
@@ -81,6 +96,33 @@ class EnemyView {
       this.hpBar.destroy();
       this.hpBar = null;
     }
+  }
+
+  /** Swaps between the painted boss mesh and the baked sprite for this enemy id. */
+  private setPaintedBody(t: EnemyId): void {
+    const tex = paintedBossTexture(t);
+    const spec = PAINTED_BOSSES[t];
+    if (this.rig) {
+      this.rig.mesh.destroy();
+      this.rig = null;
+    }
+    if (!tex || !spec) {
+      this.shadow?.destroy();
+      this.shadow = null;
+      this.sprite.visible = true;
+      this.body = this.sprite;
+      return;
+    }
+    this.rig = new PaintedBossBody(spec, tex);
+    this.sprite.visible = false;
+    if (!this.shadow) {
+      const sb = this.wv.bank.get('shadow:boss', (d) => drawShadow(d, 46, 10));
+      this.shadow = new Sprite(sb.texture);
+      this.shadow.anchor.set(sb.ax, sb.ay);
+      this.root.addChildAt(this.shadow, 0);
+    }
+    this.body = this.rig.mesh;
+    this.root.addChildAt(this.rig.mesh, 1);
   }
 
   private overlay(
@@ -114,9 +156,30 @@ class EnemyView {
     const hitK = e.hitT < 0.1 ? 1 - e.hitT / 0.1 : 0;
     const sx = (boss ? 1 : 1 + (1 - hop) * 0.08) + hitK * 0.12;
     const sy = (boss ? 1 : 1 - (1 - hop) * 0.1 + hop * 0.06) - hitK * 0.1;
-    this.body.scale.set(right ? sx : -sx, sy);
-    this.body.y = boss ? -Math.abs(Math.sin(phase)) * 2 : -hop * r * 0.35;
-    this.body.rotation = boss ? Math.sin(phase) * 0.04 : 0;
+    const rig = this.rig;
+    let hpTop = r * 1.75;
+    let cy: number;
+    if (rig) {
+      // painted boss: feet on the ground line, the mesh bends to flap, sway and step
+      const dt = this.lastT < 0 ? 0 : Math.min(0.1, t - this.lastT);
+      this.lastT = t;
+      if (e.frozenT <= 0) this.clock += dt;
+      const stride = e.progress * rig.spec.stride + e.uid;
+      const ground = r * 0.7;
+      const flip = (right ? 1 : -1) * rig.spec.faces;
+      this.body.scale.set(flip * (1 + hitK * 0.12) * rig.scale, (1 - hitK * 0.1) * rig.scale);
+      this.body.y = ground - (moving ? Math.abs(Math.sin(stride)) * 3 : 0);
+      this.body.rotation = moving ? Math.sin(stride) * flip * 0.03 : 0;
+      rig.pose(this.clock, stride, moving);
+      if (this.shadow) this.shadow.y = ground;
+      hpTop = rig.spec.height - ground + 14;
+      cy = this.body.y - rig.spec.height * 0.4;
+    } else {
+      this.body.scale.set(right ? sx : -sx, sy);
+      this.body.y = boss ? -Math.abs(Math.sin(phase)) * 2 : -hop * r * 0.35;
+      this.body.rotation = boss ? Math.sin(phase) * 0.04 : 0;
+      cy = this.body.y;
+    }
     // status tints
     let tint = 0xffffff;
     if (e.slowT > 0) tint = 0xb8ecff;
@@ -127,12 +190,12 @@ class EnemyView {
     // overlays
     if (e.armored) {
       const o = this.overlay(`ov:armor:${boss ? 'boss' : 'slime'}:${r}`, (d) => drawArmorOverlay(d, r, boss));
-      o.y = this.body.y;
+      o.y = cy;
       o.scale.x = right ? 1 : -1;
     }
     if (e.regen) {
       const o = this.overlay(`ov:regen:${r}`, (d) => drawRegenOverlay(d, r));
-      o.y = this.body.y;
+      o.y = cy;
       o.rotation = Math.sin(t * 3 + e.uid) * 0.08;
     }
     const ice = this.overlays[`ov:ice:${r}`];
@@ -165,7 +228,7 @@ class EnemyView {
       for (let i = 0; i <= 2; i++) {
         const s = this.overlays[`ov:crack:${e.type}:${i}`];
         if (s) {
-          s.y = this.body.y - (boss ? r * 0.4 : 0);
+          s.y = cy - (boss ? r * 0.4 : 0);
           s.scale.x = right ? 1 : -1;
         }
       }
@@ -178,9 +241,9 @@ class EnemyView {
       const w = r * 1.4;
       const frac = Math.max(0, e.hp / e.maxHp);
       this.hpBar.clear();
-      this.hpBar.roundRect(-w / 2 - 2, -r * 1.75 - 2, w + 4, 10, 4).fill({ color: 0x1d1410 });
+      this.hpBar.roundRect(-w / 2 - 2, -hpTop - 2, w + 4, 10, 4).fill({ color: 0x1d1410 });
       this.hpBar
-        .roundRect(-w / 2, -r * 1.75, w * frac, 6, 3)
+        .roundRect(-w / 2, -hpTop, w * frac, 6, 3)
         .fill({ color: frac > 0.5 ? 0x7bd63a : frac > 0.25 ? 0xffb02a : 0xe0304a });
     }
   }
