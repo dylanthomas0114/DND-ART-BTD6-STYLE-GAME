@@ -24,7 +24,7 @@ import type { TextureBank } from './bake';
 import { PaintedBossBody } from './paintedBoss';
 import { Particles } from './particles';
 import { paintedBossTexture, type Strip, walkerStrip } from './spriteAtlas';
-import { cyclesPerSecond, hueTint, mulTint, walkFrame } from './walkCycle';
+import { cyclesPerSecond, hueTint, mulTint, stepBob, walkFrame } from './walkCycle';
 import { makeTowerView, type TowerViewLike } from './towerView';
 import { TOWERS } from '../core/data/towers';
 
@@ -234,11 +234,17 @@ class EnemyView {
         const speed = def.speed * e.speedMult * e.slowMult;
         this.clock += dt * cyclesPerSecond(speed, ENEMIES.green.speed);
       }
-      this.sprite.texture = strip.frames[walkFrame(this.clock + e.uid * 0.37, strip.meta.frames)]!;
+      const phase01 = this.clock + e.uid * 0.37;
+      this.sprite.texture = strip.frames[walkFrame(phase01, strip.meta.frames)]!;
+      // a walker painted in one pose has no leg frames, so the whole body hops, rocks and squashes
+      const sb = strip.meta.frames === 1 ? stepBob(phase01) : null;
       const ground = look.height * 0.32;
-      this.body.scale.set((right ? 1 : -1) * (1 + hitK * 0.12) * s, (1 - hitK * 0.1) * s);
-      this.body.y = ground;
-      this.body.rotation = 0;
+      this.body.scale.set(
+        (right ? 1 : -1) * (1 + hitK * 0.12) * s,
+        (1 - hitK * 0.1) * s * (sb ? 1 + sb.squash * 0.03 : 1),
+      );
+      this.body.y = ground - (sb ? sb.lift * look.height * 0.06 : 0);
+      this.body.rotation = sb ? sb.rock * 0.08 : 0;
       if (this.shadow) this.shadow.y = ground;
       for (const extra of [this.aura, this.mark]) {
         if (!extra) continue;

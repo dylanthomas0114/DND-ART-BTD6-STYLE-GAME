@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ENEMIES } from '../../src/core/data/enemies';
 import { ENEMY_LOOKS, PAINTED_CHASSIS } from '../../src/render/art/painted';
-import { cyclesPerSecond, hueTint, mulTint, walkFrame } from '../../src/render/walkCycle';
+import { cyclesPerSecond, hueTint, mulTint, stepBob, walkFrame } from '../../src/render/walkCycle';
 
 describe('walk cycle', () => {
   it('visits every frame once per cycle, in order', () => {
@@ -81,5 +81,27 @@ describe('status tint', () => {
     const green = mulTint(0xdbf7c6, 0xb8ecff);
     expect((crimson >> 16) & 255).toBeGreaterThan((green >> 16) & 255);
     expect(crimson).not.toBe(green);
+  });
+});
+
+describe('single-pose step bob', () => {
+  it('stays inside its bounds, lifts twice per cycle and is periodic', () => {
+    let lifts = 0;
+    let prev = stepBob(0).lift;
+    let rising = true;
+    for (let i = 1; i <= 400; i++) {
+      const c = i / 200; // two full cycles
+      const b = stepBob(c);
+      expect(b.lift).toBeGreaterThanOrEqual(0);
+      expect(b.lift).toBeLessThanOrEqual(1);
+      expect(Math.abs(b.rock)).toBeLessThanOrEqual(1);
+      expect(Math.abs(b.squash)).toBeLessThanOrEqual(1);
+      if (b.lift < prev && rising) lifts++;
+      rising = b.lift >= prev;
+      prev = b.lift;
+    }
+    expect(lifts).toBe(4); // two lifts per cycle, two cycles
+    expect(stepBob(0.3).lift).toBeCloseTo(stepBob(1.3).lift, 9);
+    expect(stepBob(-0.7).lift).toBeCloseTo(stepBob(0.3).lift, 9);
   });
 });

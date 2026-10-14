@@ -49,3 +49,18 @@ export function mulTint(a: number, b: number): number {
   const ch = (shift: number): number => Math.round((((a >> shift) & 255) * ((b >> shift) & 255)) / 255);
   return (ch(16) << 16) | (ch(8) << 8) | ch(0);
 }
+
+/** Whole-body motion for a walker painted in a single pose (no leg frames to cycle). */
+export interface StepBob {
+  /** 0..1, how far the body is lifted off the ground this instant (two lifts per cycle). */
+  lift: number;
+  /** -1..1, side-to-side rock around the feet. */
+  rock: number;
+  /** -1..1, vertical squash and stretch, strongest as the feet land. */
+  squash: number;
+}
+
+export function stepBob(cycles: number): StepBob {
+  const a = cycles * Math.PI * 2;
+  return { lift: Math.abs(Math.sin(a)), rock: Math.sin(a), squash: Math.cos(a * 2) };
+}

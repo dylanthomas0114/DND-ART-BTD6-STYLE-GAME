@@ -48,7 +48,8 @@ export async function startBestiary(host: HTMLElement): Promise<void> {
     const mark = look.mark;
     if (mark === 'shadow' || mark === 'ward')
       add(`ov:aura:${mark}:${h}`, (d) => drawWalkerAura(d, mark, h), 0, 0, parent, alpha);
-    const sp = new Sprite(strip.frames[1]);
+    // Mid-stride frame; single-pose strips (the archer) only have frame 0.
+    const sp = new Sprite(strip.frames[Math.min(1, strip.frames.length - 1)]);
     sp.anchor.set(strip.meta.pivotX, strip.meta.baselineY / strip.meta.cellH);
     sp.scale.set(h / (strip.meta.cellH - 8));
     sp.y = h * 0.32;
