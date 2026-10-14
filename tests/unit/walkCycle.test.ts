@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ENEMIES } from '../../src/core/data/enemies';
 import { ENEMY_LOOKS, PAINTED_CHASSIS } from '../../src/render/art/painted';
-import { cyclesPerSecond, hueTint, walkFrame } from '../../src/render/walkCycle';
+import { cyclesPerSecond, hueTint, mulTint, walkFrame } from '../../src/render/walkCycle';
 
 describe('walk cycle', () => {
   it('visits every frame once per cycle, in order', () => {
@@ -68,5 +68,18 @@ describe('hue tint', () => {
       expect(Math.max(r, g, b)).toBe(255);
     }
     expect(hueTint(0.25)).toBe(hueTint(1.25));
+  });
+});
+
+describe('status tint', () => {
+  it('multiplies channels, so white is neutral and layer colours survive a status', () => {
+    expect(mulTint(0xffe1a0, 0xffffff)).toBe(0xffe1a0);
+    expect(mulTint(0xffffff, 0xb8ecff)).toBe(0xb8ecff);
+    expect(mulTint(0x000000, 0xb8ecff)).toBe(0x000000);
+    // a slowed crimson stays redder than a slowed green
+    const crimson = mulTint(0xffb0b0, 0xb8ecff);
+    const green = mulTint(0xdbf7c6, 0xb8ecff);
+    expect((crimson >> 16) & 255).toBeGreaterThan((green >> 16) & 255);
+    expect(crimson).not.toBe(green);
   });
 });

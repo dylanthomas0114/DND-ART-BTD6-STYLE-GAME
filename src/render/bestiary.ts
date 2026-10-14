@@ -99,7 +99,7 @@ export async function startBestiary(host: HTMLElement): Promise<void> {
     if (tex && spec) {
       const s = new Sprite(tex);
       s.anchor.set(0.5, spec.pivotY);
-      s.scale.set((spec.height / tex.height) * -spec.faces, spec.height / tex.height);
+      s.scale.set((spec.height / tex.height) * spec.faces, spec.height / tex.height);
       s.position.set(x, 750);
       stage.addChild(s);
     } else add(`enemy:${id}`, (d) => drawEnemy(d, id, r), x, 720);

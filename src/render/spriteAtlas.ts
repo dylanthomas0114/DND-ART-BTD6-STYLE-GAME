@@ -85,6 +85,7 @@ async function loadBoss(name: string): Promise<void> {
   }
 }
 
+const PRELOAD_TIMEOUT_MS = 10_000;
 let started: Promise<void> | null = null;
 
 /** Loads every painted asset once. Never rejects: any failure just leaves the vector art in use. */
@@ -97,7 +98,11 @@ export function preloadPainted(): Promise<void> {
     }
     for (const spec of Object.values(PAINTED_BOSSES)) if (spec) jobs.push(loadBoss(spec.image));
     for (const spec of Object.values(PAINTED_CHASSIS)) jobs.push(loadStrip(spec.strip));
-    await Promise.allSettled(jobs);
+    // Painted art is optional: never let a slow or hung request hold the game at the loading screen.
+    await Promise.race([
+      Promise.allSettled(jobs),
+      new Promise<void>((done) => setTimeout(done, PRELOAD_TIMEOUT_MS)),
+    ]);
   })();
   return started;
 }

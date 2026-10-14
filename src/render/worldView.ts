@@ -24,7 +24,7 @@ import type { TextureBank } from './bake';
 import { PaintedBossBody } from './paintedBoss';
 import { Particles } from './particles';
 import { paintedBossTexture, type Strip, walkerStrip } from './spriteAtlas';
-import { cyclesPerSecond, hueTint, walkFrame } from './walkCycle';
+import { cyclesPerSecond, hueTint, mulTint, walkFrame } from './walkCycle';
 import { makeTowerView, type TowerViewLike } from './towerView';
 import { TOWERS } from '../core/data/towers';
 
@@ -68,6 +68,8 @@ class EnemyView {
   private shadow: Sprite | null = null;
   private clock = 0;
   private lastT = -1;
+  private lastProgress = Number.NaN;
+  private lastMoveT = 0;
   private overlays: Record<string, Sprite | undefined> = {};
   private crackStage = -1;
   type: EnemyId;
@@ -197,6 +199,14 @@ class EnemyView {
     const hitK = e.hitT < 0.1 ? 1 - e.hitT / 0.1 : 0;
     const sx = (boss ? 1 : 1 + (1 - hop) * 0.08) + hitK * 0.12;
     const sy = (boss ? 1 : 1 - (1 - hop) * 0.1 + hop * 0.06) - hitK * 0.1;
+    // Painted bodies only animate while the simulation really moves them: not while the sim is
+    // stalled (defeat screen), and not while frozen or stunned.
+    if (e.progress !== this.lastProgress) {
+      this.lastProgress = e.progress;
+      this.lastMoveT = t;
+    }
+    const stalled = moving && t - this.lastMoveT >= 0.15;
+    const animating = moving && !stalled;
     const rig = this.rig;
     let hpTop = r * 1.75;
     let cy: number;
@@ -204,14 +214,14 @@ class EnemyView {
       // painted boss: feet on the ground line, the mesh bends to flap, sway and step
       const dt = this.lastT < 0 ? 0 : Math.min(0.1, t - this.lastT);
       this.lastT = t;
-      if (e.frozenT <= 0) this.clock += dt;
+      if (e.frozenT <= 0 && !stalled) this.clock += dt;
       const stride = e.progress * rig.spec.stride + e.uid;
       const ground = r * 0.7;
       const flip = (right ? 1 : -1) * rig.spec.faces;
       this.body.scale.set(flip * (1 + hitK * 0.12) * rig.scale, (1 - hitK * 0.1) * rig.scale);
-      this.body.y = ground - (moving ? Math.abs(Math.sin(stride)) * 3 : 0);
-      this.body.rotation = moving ? Math.sin(stride) * flip * 0.03 : 0;
-      rig.pose(this.clock, stride, moving);
+      this.body.y = ground - (animating ? Math.abs(Math.sin(stride)) * 3 : 0);
+      this.body.rotation = animating ? Math.sin(stride) * flip * 0.03 : 0;
+      rig.pose(this.clock, stride, animating);
       if (this.shadow) this.shadow.y = ground;
       hpTop = rig.spec.height - ground + 14;
       cy = this.body.y - rig.spec.height * 0.4;
@@ -220,7 +230,7 @@ class EnemyView {
       const { look, strip, s } = this.walker;
       const dt = this.lastT < 0 ? 0 : Math.min(0.1, t - this.lastT);
       this.lastT = t;
-      if (moving) {
+      if (animating) {
         const speed = def.speed * e.speedMult * e.slowMult;
         this.clock += dt * cyclesPerSecond(speed, ENEMIES.green.speed);
       }
@@ -247,8 +257,9 @@ class EnemyView {
     let tint = 0xffffff;
     if (this.walker)
       tint = this.walker.look.mark === 'prism' ? hueTint(t * 0.25 + e.uid * 0.13) : this.walker.look.tint;
-    if (e.slowT > 0) tint = 0xb8ecff;
-    if (e.burnT > 0) tint = 0xffc49a;
+    // status colours multiply the layer colour, so a slowed crimson still reads as crimson
+    if (e.slowT > 0) tint = mulTint(tint, 0xb8ecff);
+    if (e.burnT > 0) tint = mulTint(tint, 0xffc49a);
     if (hitK > 0.5) tint = 0xffffff;
     this.body.tint = tint;
     this.root.alpha = e.invisible ? 0.42 + Math.sin(t * 6 + e.uid) * 0.1 : 1;

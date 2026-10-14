@@ -43,3 +43,9 @@ export function hueTint(turns: number): number {
   const to = (v: number): number => Math.round((v + m) * 255);
   return (to(r) << 16) | (to(g) << 8) | to(b);
 }
+
+/** Per-channel product of two 0xRRGGBB colours, so a status colour tints a layer colour instead of replacing it. */
+export function mulTint(a: number, b: number): number {
+  const ch = (shift: number): number => Math.round((((a >> shift) & 255) * ((b >> shift) & 255)) / 255);
+  return (ch(16) << 16) | (ch(8) << 8) | ch(0);
+}

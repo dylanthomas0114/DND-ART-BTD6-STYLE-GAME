@@ -16,7 +16,7 @@ Saturated but harmonious palettes. Characters use a **3/4 front view** and flip 
 - Towers are 48–64 px on screen. Weapons and shields are drawn about **1.5× life size**.
 - Every tier must change the silhouette. A Playwright pixel-diff check (`?gallery`) enforces this.
 - Gear contrasts against the body: light metal against dark cloth, or the reverse.
-- Each slime color also has its own **face, pattern and size**, so colorblind players can tell them apart.
+- Each skeleton layer also has its own **size and a small mark** (aura, spikes, plates, bolt, moss), and the prismatic layer cycles hue, so colorblind players can tell layers apart without relying on colour alone.
 
 ## Palette anchors
 
