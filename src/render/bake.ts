@@ -1,4 +1,12 @@
-import { type Application, Graphics, type Texture } from 'pixi.js';
+import {
+  type Application,
+  type Container,
+  Graphics,
+  Matrix,
+  type Rectangle,
+  RenderTexture,
+  type Texture,
+} from 'pixi.js';
 import { Draw } from './art/pen';
 
 export interface Baked {
@@ -48,4 +56,26 @@ export class TextureBank {
   get size(): number {
     return this.cache.size;
   }
+}
+
+/**
+ * Rasterises a large static drawing once, without multisampling. `generateTexture` always turns
+ * antialiasing on for this app, and a multisampled target keeps a 4x renderbuffer alive for as
+ * long as the texture exists (hundreds of MB for a map). The map is baked at or above its on-screen
+ * size, so the plain target looks the same and costs a quarter of the memory.
+ */
+export function bakeFlat(app: Application, target: Container, frame: Rectangle, resolution: number): Texture {
+  const rt = RenderTexture.create({
+    width: Math.ceil(frame.width),
+    height: Math.ceil(frame.height),
+    resolution,
+    antialias: false,
+  });
+  app.renderer.render({
+    container: target,
+    target: rt,
+    transform: new Matrix().translate(-frame.x, -frame.y),
+    clearColor: [0, 0, 0, 0],
+  });
+  return rt;
 }

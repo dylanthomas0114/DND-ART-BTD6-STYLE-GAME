@@ -17,6 +17,8 @@ import {
 import { drawShadow } from './art/bodies';
 import { ENEMY_LOOKS, type EnemyLook, PAINTED_BOSSES } from './art/painted';
 import { drawDecor, drawMapGround, drawRoads, MAP_MARGIN_X, MAP_MARGIN_Y, scatterDecor } from './art/mapArt';
+import { bakeGround, bakeRoads } from './mapBake';
+import { type DecorRef, MapLife } from './mapLife';
 import { DTYPE_COLOR } from './art/palette';
 import { Draw } from './art/pen';
 import { FX, PROJECTILES } from './art/projectiles';
@@ -371,6 +373,8 @@ export class WorldView {
   private lastLeakFlash = -1;
   private readonly unsubs: (() => void)[] = [];
   private readonly bgTextures: Texture[] = [];
+  private readonly decorRefs: DecorRef[] = [];
+  private life!: MapLife;
   layout: Layout = { scale: 1, x: 0, y: 0 };
   private base = { x: 0, y: 0 };
   quality: 'low' | 'medium' | 'high' = 'high';
@@ -395,6 +399,9 @@ export class WorldView {
     this.flash.alpha = 0;
     this.root.addChild(this.flash);
     this.buildBackground();
+    this.life = new MapLife(this.bank, this.game.map, this.decorRefs);
+    this.root.addChildAt(this.life.under, this.root.getChildIndex(this.bgLayer) + 1);
+    this.root.addChildAt(this.life.over, this.root.getChildIndex(this.overlay));
     this.bindEvents();
   }
 
@@ -409,6 +416,36 @@ export class WorldView {
   private buildBackground(): void {
     const map = this.game.map;
     // Try AI-painted art first (public/assets/maps/<id>.webp); fall back to code-drawn terrain.
+    let gs: Sprite;
+    try {
+      const res = Math.min(this.bank.resolution, 1.5);
+      const gl = bakeGround(this.app, this.bank, map, Math.min(res, 4096 / (WORLD_W + MAP_MARGIN_X * 2)));
+      const rl = bakeRoads(this.app, this.bank, map, Math.min(res, 4096 / WORLD_W));
+      this.bgTextures.push(gl.texture, rl.texture);
+      gs = new Sprite(gl.texture);
+      gs.position.set(gl.x, gl.y);
+      const rs = new Sprite(rl.texture);
+      rs.position.set(rl.x, rl.y);
+      this.bgLayer.addChild(gs, rs);
+    } catch {
+      gs = this.buildFlatBackground();
+    }
+    void this.tryPaintedBackground(gs);
+    // decor (depth-sorted with actors)
+    for (const it of scatterDecor(map)) {
+      const b = this.bank.get(`decor:${it.kind}:${it.s.toFixed(2)}`, (d) => drawDecor(d, it.kind, it.s));
+      const s = new Sprite(b.texture);
+      s.anchor.set(b.ax, b.ay);
+      s.position.set(it.x, it.y);
+      s.zIndex = it.y;
+      this.actors.addChild(s);
+      this.decorRefs.push({ sprite: s, kind: it.kind, x: it.x, y: it.y });
+    }
+  }
+
+  /** The original flat terrain, kept as a fallback if the rich bake is unavailable. */
+  private buildFlatBackground(): Sprite {
+    const map = this.game.map;
     const ground = new Graphics();
     drawMapGround(new Draw(ground, 3), map, false);
     const roads = new Graphics();
@@ -433,16 +470,7 @@ export class WorldView {
     this.bgLayer.addChild(gs, rs);
     ground.destroy();
     roads.destroy();
-    void this.tryPaintedBackground(gs);
-    // decor (depth-sorted with actors)
-    for (const it of scatterDecor(map)) {
-      const b = this.bank.get(`decor:${it.kind}:${it.s.toFixed(2)}`, (d) => drawDecor(d, it.kind, it.s));
-      const s = new Sprite(b.texture);
-      s.anchor.set(b.ax, b.ay);
-      s.position.set(it.x, it.y);
-      s.zIndex = it.y;
-      this.actors.addChild(s);
-    }
+    return gs;
   }
 
   private async tryPaintedBackground(fallback: Sprite): Promise<void> {
@@ -825,8 +853,9 @@ export class WorldView {
   }
 
   // ---------------------------------------------------------------------------------- frame
-  update(dt: number): void {
+  update(dt: number, realDt = dt): void {
     this.time += dt;
+    this.life.update(realDt, this.quality);
     this.frame++;
     const g = this.game;
     const f = this.frame;
@@ -1040,6 +1069,7 @@ export class WorldView {
   destroy(): void {
     for (const u of this.unsubs) u();
     this.particles.clear();
+    this.life.destroy();
     this.root.destroy({ children: true });
     for (const t of this.bgTextures) t.destroy(true);
     this.bgTextures.length = 0;

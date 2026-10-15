@@ -59,7 +59,7 @@ export class GameSession {
       if (this.autoStart && !this.game.roundActive && !this.game.over && this.game.round > 0)
         this.game.startRound();
     }
-    this.view.update(this.paused ? 0 : dtReal * this.speed);
+    this.view.update(this.paused ? 0 : dtReal * this.speed, dtReal);
     this.onFrame?.();
   }
 

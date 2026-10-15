@@ -62,6 +62,19 @@ Plan: `/root/.claude/plans/declarative-napping-pinwheel.md` (merged vertical-sli
 - Archer commit and G2 review fixes: lint, typecheck, `npm test` 141 pass (5 new painted-asset checks), `npm run build`, `npm run e2e` 4 pass; CI `check` and `apk` green on `e3fda0f`.
 - Not run yet: sim:balance (no sim change), G1 crowded-wave review against the old look, device test.
 
+## Maps (rich terrain and ambient animation)
+
+- Request (2026-10-15): maximum-quality, animated maps. Done in code for all three maps (Glade, Crypt, Pass); no generation credits used. Details in `docs/ART_BIBLE.md` (Maps).
+- New files: `src/render/mapBake.ts` (terrain and road bake), `src/render/mapLife.ts` (animation layer), `src/render/wind.ts`, `src/render/art/ambientArt.ts`, richer `drawDecor`/`drawCover`/water/flagstones/strata in `src/render/art/mapArt.ts`, `bakeFlat` in `src/render/bake.ts`. The old flat drawing stays as a fallback if the bake throws.
+- Measured on the swiftshader emulation (915x412 @ DPR 2), old build vs new:
+  - Multisample renderbuffer storage requested during load: about 210 MB -> about 20 MB per map (counted by wrapping `renderbufferStorageMultisample`; samples x w x h x 4). The map textures are now baked without multisampling.
+  - Load time to first frame: no regression (0.5-0.75 s new vs 0.45-1.7 s old; noisy).
+  - Per frame with 150 walkers + 5 whelps: draws 12 -> 13.8, GL calls 289 -> 316, `view.update` 0.52 -> 0.65 ms, `render()` 1.3 -> 1.4 ms, software-GL frame time about +7% (cloud and tuft overdraw). Not a phone result.
+  - Texture count stays flat across menu/game cycles (167 managed textures after four cycles); the ambient layer is destroyed with the view.
+- Previews: `docs/shots/map_before_after_{glade,crypt,pass}.png`, animated `docs/shots/map_{glade,crypt,pass}_anim.gif` and `map_glade_pond_zoom.gif` (stepped deterministically at true speed).
+- Bug found and fixed on the way: a tiled grain layer left faint vertical seams; the grain is now drawn into the terrain.
+- Not done: a hand-painted map background (the game still supports an optional `public/assets/maps/<id>.webp` painted layer under the road), device test, `sim:balance` (no sim change).
+
 ## G2 performance (painted enemies), desktop emulation only
 
 Chromium on swiftshader (software GL), 915x412 @ DPR 2, 150 skeleton walkers (all 12 layers) + 5 whelp bosses on the road, enemies nearly still. Frame times (about 145-170 ms) are the software rasteriser, **not** a phone result; the draw-call, GL-call and CPU columns are the useful ones. Harness: scratchpad `perf.mjs` (counts GL calls by wrapping the context, times `view.update` and `renderer.render`).
