@@ -53,6 +53,8 @@ async function loadStrip(name: string): Promise<void> {
   const meta = await fetchJson<StripMeta>(`${BASE}${name}.json`);
   if (!meta) return;
   const tex = await Assets.load<Texture>(`${BASE}${name}.png`);
+  // A JSON and PNG from different builds (e.g. half-cached) must not give garbled frames: use the vector art.
+  if (tex.width < meta.frames * meta.cellW || tex.height < meta.cellH) return;
   const frames: Texture[] = [];
   for (let i = 0; i < meta.frames; i++) {
     frames.push(

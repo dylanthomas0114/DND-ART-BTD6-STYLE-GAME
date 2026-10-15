@@ -370,6 +370,7 @@ export class WorldView {
   private flashColor = 0xffffff;
   private lastLeakFlash = -1;
   private readonly unsubs: (() => void)[] = [];
+  private readonly bgTextures: Texture[] = [];
   layout: Layout = { scale: 1, x: 0, y: 0 };
   private base = { x: 0, y: 0 };
   quality: 'low' | 'medium' | 'high' = 'high';
@@ -423,6 +424,8 @@ export class WorldView {
     });
     const gb = ground.getLocalBounds();
     const rb = roads.getLocalBounds();
+    // Unique to this view and multisampled: root.destroy() leaves textures alone, so destroy() frees them.
+    this.bgTextures.push(groundTex, roadTex);
     const gs = new Sprite(groundTex);
     gs.position.set(gb.x, gb.y);
     const rs = new Sprite(roadTex);
@@ -1038,5 +1041,7 @@ export class WorldView {
     for (const u of this.unsubs) u();
     this.particles.clear();
     this.root.destroy({ children: true });
+    for (const t of this.bgTextures) t.destroy(true);
+    this.bgTextures.length = 0;
   }
 }

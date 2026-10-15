@@ -60,7 +60,32 @@ Plan: `/root/.claude/plans/declarative-napping-pinwheel.md` (merged vertical-sli
 
 - Whelp boss commit: lint (only the untracked plugin file is flagged by prettier), typecheck, `npm test` 127 pass, `npm run build`, `npm run e2e` 4 pass (Pixel 7 emulation). `sim:balance` not re-run: no simulation change, only display text.
 - Earlier: lint, typecheck, `npm test` (122 pass incl. clip timing), `npm run build`, `npm run e2e` (4 pass, Pixel 7 emulation, swiftshader): all green at commit 0154890.
-- Not run yet: sim:balance (no sim change), perf stress with painted assets, phone-size crowded-wave review (G1), device test.
+- Archer commit and G2 review fixes: lint, typecheck, `npm test` 141 pass (5 new painted-asset checks), `npm run build`, `npm run e2e` 4 pass; CI `check` and `apk` green on `e3fda0f`.
+- Not run yet: sim:balance (no sim change), G1 crowded-wave review against the old look, device test.
+
+## G2 performance (painted enemies), desktop emulation only
+
+Chromium on swiftshader (software GL), 915x412 @ DPR 2, 150 skeleton walkers (all 12 layers) + 5 whelp bosses on the road, enemies nearly still. Frame times (about 145-170 ms) are the software rasteriser, **not** a phone result; the draw-call, GL-call and CPU columns are the useful ones. Harness: scratchpad `perf.mjs` (counts GL calls by wrapping the context, times `view.update` and `renderer.render`).
+
+| Scene                                        | Draws/frame | GL calls | Tex binds | `view.update` | `render()` |
+| -------------------------------------------- | ----------- | -------- | --------- | ------------- | ---------- |
+| All vector fallback (150 walkers + 5 bosses) | 3           | 175      | 82        | 0.42 ms       | 0.99 ms    |
+| Painted walkers only                         | 3           | 173      | 81        | 0.44 ms       | 1.17 ms    |
+| Painted walkers + 5 painted whelps           | 13          | 349      | 145       | 0.52 ms       | 1.26 ms    |
+| Same, shadow/aura/mark sprites removed (229) | 11          | 206      | 75        | 0.46 ms       | 1.08 ms    |
+| Same, mesh forced to batch mode              | 3           | 175      | 82        | 0.61 ms       | 1.48 ms    |
+
+- Painted walkers cost about the same as the vector ones. Each non-batched whelp mesh costs about +2 draws and +35 GL calls (Pixi does not batch a 140-vertex mesh by default). Forcing batch mode drops draws to 3 but frame time did not change here (software GL is fill-bound), so it is **not applied**; worth re-testing on a device.
+- Decoded texture memory for every painted PNG: 2.48 MB total (whelp 0.67, ranger strip and gear 1.5, skeletons 0.27); 736 KB on disk.
+- Not measured: real phone, moving enemies, towers/projectiles/particles on screen, thermal throttling. So "G2 passes" is **not** claimed; only "no draw-call or CPU regression found in this emulation".
+
+### Independent review (4 lenses, read-only) and what came of it
+
+- Lifecycle, frame cost, loading: no defect in the painted enemy path (no leaked sprites, meshes or textures on pop/death/restart; fallback chain and Capacitor URLs correct). The fourth lens (validity of the measurement) and most skeptic verifiers were cut off by an account session limit, so those results are **unverified, not refuted**; I checked each remaining finding in the code myself.
+- **Fixed, confirmed by measurement:** `WorldView` baked two multisampled textures (ground, road) per view and never destroyed them. The menu backdrop is itself a world view, so every Play/menu cycle leaked four textures (managed textures 136, 140, 144, 148 over four cycles; flat at 134 after the fix). Pre-existing, not caused by the painted art. `WorldView.destroy()` now frees them.
+- **Fixed:** the service worker served painted art and map paintings cache-first forever under a fixed cache name, so swapping `skel_archer.*` would never reach installed web players. Cache name bumped to v2 and art/map files are now stale-while-revalidate. `loadStrip` also refuses a strip whose PNG is smaller than its JSON says (half-cached pair) and falls back to vector art.
+- **Fixed:** new `tests/unit/paintedAssets.test.ts` checks every registry entry has its JSON and PNG, that they agree, and that gear atlas items sit inside their PNG, so a mistyped name or half-copied art swap no longer falls back silently.
+- **Left as is (minor, unmeasured on a phone):** the quality tier (auto-low and the Low setting) only reduces particles and cannot shed enemy cost (shadow sprites could be hidden at Low); boot waits up to 10 s for optional art on a stalled first load (art keeps loading afterwards and later sessions use it); the render loop is uncapped on 90/120 Hz phones (pre-existing); per-frame small allocations (hpBar redraw, a temporary object per tint) are far below a GC problem.
 
 ## Blockers / open questions
 
