@@ -1,0 +1,228 @@
+import type { TowerDef } from '../towerTypes';
+import {
+  ability,
+  add,
+  addAttack,
+  attack,
+  dmg,
+  gear,
+  mul,
+  pierce,
+  range,
+  rate,
+  sight,
+  stats,
+  support,
+  up,
+  withAbility,
+} from '../towerKit';
+
+const sweep = attack({
+  id: 'main',
+  kind: 'melee',
+  rate: 1.0,
+  damage: 1,
+  pierce: 3,
+  dtype: 'slashing',
+  anim: 'mainHand',
+});
+
+export const fighter: TowerDef = {
+  id: 'fighter',
+  name: 'Fighter',
+  title: 'Sellsword of the Crossroads',
+  blurb: 'Close-range blade sweeps that cut through crowds.',
+  cost: 230,
+  footprint: 22,
+  placement: 'land',
+  rig: 'humanoid',
+  look: 'fighter',
+  slots: ['ground', 'back', 'body', 'companion', 'head', 'offHand', 'mainHand'],
+  baseGear: [gear('mainHand', 'sword_rusty')],
+  base: stats({ range: 105, attacks: [sweep] }),
+  paths: [
+    {
+      name: 'Blade',
+      slots: ['mainHand', 'head'],
+      upgrades: [
+        up(
+          'Longsword',
+          140,
+          'A proper longsword cuts one more foe per sweep.',
+          [gear('mainHand', 'sword_long')],
+          [pierce(1)],
+        ),
+        up('Steel Helm', 220, 'Steadier stance: faster sweeps.', [gear('head', 'helm_steel')], [rate(0.8)]),
+        up(
+          'Runed Blade',
+          900,
+          'Runes etched along the blade strike twice as hard and through iron.',
+          [gear('mainHand', 'sword_runed')],
+          [dmg(1), pierce(2), mul('shellMult', 2)],
+        ),
+        up(
+          'Flaming Runeblade',
+          3200,
+          'The runes ignite: sweeps set foes ablaze.',
+          [gear('mainHand', 'sword_flame'), gear('head', 'helm_horned')],
+          [dmg(2), add('effects.burnDps', 2), add('effects.burnDur', 3), pierce(3)],
+        ),
+        up(
+          'Dawnbreaker',
+          16500,
+          'A legendary blade. Devastating to giants. Ability: Whirlwind.',
+          [gear('mainHand', 'sword_dawn'), gear('head', 'helm_crown')],
+          [
+            dmg(8),
+            mul('bossMult', 3),
+            pierce(6),
+            rate(0.7),
+            withAbility(
+              ability({
+                id: 'whirlwind',
+                name: 'Whirlwind',
+                kind: 'frenzy',
+                cooldown: 45,
+                duration: 6,
+                rateMult: 0.25,
+              }),
+            ),
+          ],
+        ),
+      ],
+    },
+    {
+      name: 'Shield',
+      slots: ['offHand', 'body'],
+      upgrades: [
+        up(
+          'Buckler',
+          120,
+          'Shield bashes briefly stun foes in reach.',
+          [gear('offHand', 'shield_buckler')],
+          [
+            addAttack(
+              attack({
+                id: 'bash',
+                kind: 'melee',
+                rate: 2.2,
+                damage: 1,
+                pierce: 2,
+                dtype: 'blast',
+                anim: 'offHand',
+                effects: { stunDur: 0.6 },
+              }),
+            ),
+          ],
+        ),
+        up(
+          'Kite Shield & Mail',
+          300,
+          'Chain mail and a kite shield: bigger, harder bashes.',
+          [gear('offHand', 'shield_kite'), gear('body', 'armor_chain')],
+          [pierce(3, 'bash'), add('effects.stunDur', 0.4, 'bash')],
+        ),
+        up(
+          'Tower Shield',
+          1100,
+          'Hold the Line: bashes knock foes back and slow them.',
+          [gear('offHand', 'shield_tower'), gear('body', 'armor_plate')],
+          [
+            dmg(2, 'bash'),
+            pierce(4, 'bash'),
+            add('effects.slowDur', 2, 'bash'),
+            mul('effects.slowMult', 0.6, 'bash'),
+            add('effects.bossControl', 0.3, 'bash'),
+          ],
+        ),
+        up(
+          'Lion Shield',
+          3800,
+          'Ability: Shield Wall stuns every non-boss foe in reach.',
+          [gear('offHand', 'shield_lion'), gear('body', 'armor_gilded')],
+          [
+            dmg(3, 'bash'),
+            rate(0.7, 'bash'),
+            withAbility(
+              ability({
+                id: 'shieldwall',
+                name: 'Shield Wall',
+                kind: 'nova',
+                cooldown: 35,
+                radius: 220,
+                stun: 3,
+                value: 5,
+                dtype: 'blast',
+              }),
+            ),
+          ],
+        ),
+        up(
+          'Aegis of Ages',
+          19000,
+          'An unbreakable aegis. Bashes stagger even bosses.',
+          [gear('offHand', 'shield_aegis'), gear('body', 'armor_aegis')],
+          [
+            dmg(15, 'bash'),
+            pierce(10, 'bash'),
+            add('effects.bossControl', 0.5, 'bash'),
+            mul('bossMult', 4, 'bash'),
+            rate(0.6, 'bash'),
+          ],
+        ),
+      ],
+    },
+    {
+      name: 'Warbanner',
+      slots: ['back', 'ground'],
+      upgrades: [
+        up('Red Cloak', 100, 'A dashing cloak. Longer reach.', [gear('back', 'cape_red')], [range(1.15)]),
+        up(
+          'Battle Standard',
+          350,
+          'Nearby towers attack 15% faster.',
+          [gear('ground', 'standard_simple')],
+          [support('radius', 'set', 170), support('rateMult', 'mul', 0.85)],
+        ),
+        up(
+          'War Banner',
+          1300,
+          'Nearby towers gain +1 pierce.',
+          [gear('back', 'banner_war')],
+          [support('pierceAdd', 'add', 1), support('radius', 'add', 20)],
+        ),
+        up(
+          'Dragon Standard',
+          4200,
+          'Ability: Rally. Nearby towers attack twice as fast for 8s.',
+          [gear('ground', 'standard_dragon')],
+          [
+            withAbility(
+              ability({
+                id: 'rally',
+                name: 'Rally',
+                kind: 'rally',
+                cooldown: 50,
+                duration: 8,
+                rateMult: 0.5,
+              }),
+            ),
+          ],
+        ),
+        up(
+          'Legion Banner',
+          22000,
+          'Nearby towers deal +1 damage and see invisible foes.',
+          [gear('back', 'banner_legion'), gear('ground', 'standard_legion')],
+          [
+            support('damageAdd', 'add', 1),
+            support('grantSight', 'set', 1),
+            sight(),
+            support('radius', 'add', 40),
+            support('rateMult', 'mul', 0.85),
+          ],
+        ),
+      ],
+    },
+  ],
+};

@@ -1,0 +1,227 @@
+import type { TowerDef } from '../towerTypes';
+import {
+  ability,
+  add,
+  addAttack,
+  attack,
+  dmg,
+  dtype,
+  gear,
+  mul,
+  pierce,
+  range,
+  rate,
+  set,
+  sight,
+  stats,
+  up,
+  withAbility,
+} from '../towerKit';
+
+const chill = attack({
+  id: 'main',
+  kind: 'aura',
+  rate: 2.0,
+  damage: 1,
+  pierce: 40,
+  dtype: 'cold',
+  anim: 'mainHand',
+  effects: { freezeDur: 0.9 },
+});
+
+export const druid: TowerDef = {
+  id: 'druid',
+  name: 'Frost Druid',
+  title: 'Keeper of the Winter Grove',
+  blurb: 'Freezes everything nearby. Can stand on water.',
+  cost: 450,
+  footprint: 21,
+  placement: 'any',
+  rig: 'humanoid',
+  look: 'druid',
+  slots: ['ground', 'back', 'companion', 'body', 'head', 'offHand', 'mainHand'],
+  baseGear: [gear('mainHand', 'staff_gnarled')],
+  base: stats({ range: 116, attacks: [chill] }),
+  paths: [
+    {
+      name: 'Permafrost',
+      slots: ['offHand', 'ground'],
+      upgrades: [
+        up(
+          'Frost Crystal',
+          150,
+          'Thawed foes stay slowed.',
+          [gear('offHand', 'crystal_frost')],
+          [set('effects.slowMult', 0.7), set('effects.slowDur', 2)],
+        ),
+        up(
+          'Rime Circle',
+          250,
+          'A ring of rime widens the chill.',
+          [gear('ground', 'circle_rime')],
+          [range(1.15)],
+        ),
+        up(
+          'Arctic Wind',
+          1300,
+          'Constant icy wind slows all foes in range.',
+          [gear('offHand', 'crystal_wind')],
+          [
+            addAttack(
+              attack({
+                id: 'wind',
+                kind: 'aura',
+                rate: 0.25,
+                damage: 0,
+                pierce: 200,
+                dtype: 'cold',
+                anim: 'offHand',
+                effects: { slowMult: 0.6, slowDur: 0.5, bossControl: 1 },
+              }),
+            ),
+          ],
+        ),
+        up(
+          'Glacier',
+          4000,
+          'Ability: Absolute Zero freezes the whole map.',
+          [gear('ground', 'glacier')],
+          [
+            withAbility(
+              ability({
+                id: 'absolutezero',
+                name: 'Absolute Zero',
+                kind: 'nova',
+                cooldown: 50,
+                at: 'map',
+                freeze: 4,
+                value: 1,
+                dtype: 'cold',
+              }),
+            ),
+          ],
+        ),
+        up(
+          'Heart of Winter',
+          16000,
+          'Freezing slows even bosses to a crawl.',
+          [gear('offHand', 'heart_winter')],
+          [set('effects.slowMult', 0.4, 'wind'), add('effects.bossControl', 0.6), dmg(3), range(1.2)],
+        ),
+      ],
+    },
+    {
+      name: 'Blizzard',
+      slots: ['mainHand', 'head'],
+      upgrades: [
+        up('Frost Staff', 200, 'The chill bites harder.', [gear('mainHand', 'staff_frost')], [dmg(1)]),
+        up('Antler Crown', 350, 'Pulses more often.', [gear('head', 'crown_antler')], [rate(0.75)]),
+        up(
+          'Blizzard Staff',
+          1800,
+          'A howling blizzard: hits far more foes.',
+          [gear('mainHand', 'staff_blizzard')],
+          [dmg(2), pierce(60), mul('shellMult', 2)],
+        ),
+        up(
+          'Icicle Crown',
+          4200,
+          'Hurls piercing icicles too.',
+          [gear('head', 'crown_icicle')],
+          [
+            addAttack(
+              attack({
+                id: 'icicle',
+                kind: 'projectile',
+                rate: 0.5,
+                damage: 4,
+                pierce: 5,
+                dtype: 'cold',
+                anim: 'head',
+                rangeMult: 1.5,
+                projectile: { speed: 900, sprite: 'icicle', lifetime: 0.6 },
+              }),
+            ),
+          ],
+        ),
+        up(
+          'Staff of Endless Winter',
+          20000,
+          'An unending blizzard.',
+          [gear('mainHand', 'staff_winter')],
+          [dmg(6), range(1.3), rate(0.7), add('damage', 8, 'icicle')],
+        ),
+      ],
+    },
+    {
+      name: 'Wild',
+      slots: ['companion', 'body'],
+      upgrades: [
+        up(
+          'Snow Fox',
+          180,
+          'A snow fox nips at passing foes and sniffs out the invisible.',
+          [gear('companion', 'pet_snowfox')],
+          [
+            sight(),
+            addAttack(
+              attack({
+                id: 'pet',
+                kind: 'melee',
+                rate: 1.0,
+                damage: 1,
+                pierce: 1,
+                dtype: 'slashing',
+                anim: 'companion',
+                rangeMult: 0.9,
+              }),
+            ),
+          ],
+        ),
+        up('Bark Armor', 300, 'Living bark: wider chill.', [gear('body', 'armor_bark')], [range(1.2)]),
+        up(
+          'Frost Wolf',
+          1400,
+          'The fox grows into a frost wolf.',
+          [gear('companion', 'pet_frostwolf')],
+          [dmg(2, 'pet'), pierce(3, 'pet'), dtype('cold', 'pet')],
+        ),
+        up(
+          'Frost Bear',
+          4400,
+          'A great white bear mauls and stuns.',
+          [gear('companion', 'pet_frostbear')],
+          [dmg(6, 'pet'), pierce(4, 'pet'), add('effects.stunDur', 0.7, 'pet'), rate(0.8, 'pet')],
+        ),
+        up(
+          'Spirit of the Wyrm',
+          19000,
+          'A frost wyrm breathes killing cold.',
+          [gear('companion', 'pet_frostwyrm'), gear('body', 'armor_spirit')],
+          [
+            addAttack(
+              attack({
+                id: 'breath',
+                kind: 'projectile',
+                rate: 0.7,
+                damage: 6,
+                pierce: 8,
+                dtype: 'cold',
+                anim: 'companion',
+                projectile: {
+                  speed: 700,
+                  sprite: 'frostbreath',
+                  count: 5,
+                  spread: 0.7,
+                  lifetime: 0.5,
+                  radius: 14,
+                },
+                effects: { freezeDur: 0.5 },
+              }),
+            ),
+          ],
+        ),
+      ],
+    },
+  ],
+};

@@ -1,0 +1,61 @@
+{
+  "note": "AI-painted assets. Each entry is generated with the Krea connector (see scripts/gen-art.md), saved to `source`, then `npm run art:process` writes `output`. Every asset is optional: the game falls back to code-drawn art when the output file is missing.",
+  "status": "pending: Krea balance was 0 on 2026-10-09 (INSUFFICIENT_BALANCE); nothing generated yet",
+  "assets": [
+    {
+      "id": "map-glade",
+      "model": "google/nano-banana-pro",
+      "aspect_ratio": "21:9",
+      "resolution": "2K",
+      "guide": "art/guides/glade.png",
+      "prompt": "Repaint this top-down tower defense game map as a lush, hand-painted fantasy battle map in a polished mobile game art style (bright, saturated, soft cel shading, like a premium cartoon tower defense game). Keep the exact layout: the winding dirt road must stay exactly where it is with the same shape and width, and the small pond stays in the same place. Paint the road as a warm sandy dirt path with subtle wheel ruts and pebbles and grassy edges. Paint the surrounding ground as a sunny forest glade: rich green grass with gentle color variation, small flowers, clover patches, tiny pebbles. Keep large open clearings with no big objects inside the play area; place bushes, small mushrooms and a few tree canopies only along the outer edges of the image. Strictly top-down orthographic view, no perspective horizon, no text, no UI, no characters, no creatures, no buildings.",
+      "source": "art/source/map-glade.png",
+      "output": "public/assets/maps/glade.webp",
+      "size": [2100, 900]
+    },
+    {
+      "id": "map-crypt",
+      "model": "google/nano-banana-pro",
+      "aspect_ratio": "21:9",
+      "resolution": "2K",
+      "guide": "art/guides/crypt.png",
+      "prompt": "Repaint this top-down tower defense game map as a hand-painted fantasy battle map in a polished mobile game art style (saturated, soft cel shading). Keep the exact layout: the pale stone road must stay exactly where it is with the same shape and width, and the three teal pools stay in the same places. Theme: a flooded underground crypt courtyard: worn grey flagstones and cracked tiles, moss in the cracks, scattered candles and bones near the edges, glowing teal water with gentle ripples and lily-like cave fungus. Keep large open areas clear; put broken pillars and gravestones only along the outer edges. Strictly top-down orthographic view, no text, no UI, no characters, no creatures.",
+      "source": "art/source/map-crypt.png",
+      "output": "public/assets/maps/crypt.webp",
+      "size": [2100, 900]
+    },
+    {
+      "id": "map-pass",
+      "model": "google/nano-banana-pro",
+      "aspect_ratio": "21:9",
+      "resolution": "2K",
+      "guide": "art/guides/pass.png",
+      "prompt": "Repaint this top-down tower defense game map as a hand-painted fantasy battle map in a polished mobile game art style (saturated, warm, soft cel shading). Keep the exact layout: the two dark cobbled roads that merge into one must stay exactly where they are with the same shapes and widths. Theme: a scorched mountain pass near a dragon's lair: warm ochre and rust rock, cracked earth, ember-glowing fissures, scattered orange crystals and old bones near the edges, a few hardy pines at the margins. Keep large open areas clear for building. Strictly top-down orthographic view, no text, no UI, no characters, no creatures.",
+      "source": "art/source/map-pass.png",
+      "output": "public/assets/maps/pass.webp",
+      "size": [2100, 900]
+    },
+    {
+      "id": "logo",
+      "model": "openai/gpt-image-2.5-flare",
+      "aspect_ratio": "2:1",
+      "resolution": "2K",
+      "background": "transparent",
+      "prompt": "Game logo wordmark reading exactly \"ARCANE RAMPARTS\" in bold carved fantasy capitals, gold letters with thick dark outline and bevel, a small crossed sword and staff behind the words, a shield crest in the centre, polished mobile game logo, transparent background.",
+      "source": "art/source/logo.png",
+      "output": "public/assets/ui/logo.webp",
+      "size": [1200, 600]
+    },
+    {
+      "id": "splash",
+      "model": "openai/gpt-image-2.5-flare",
+      "aspect_ratio": "16:9",
+      "resolution": "2K",
+      "background": "opaque",
+      "prompt": "Key art for a cartoon fantasy tower defense mobile game: a chibi party of heroes (a fighter with sword and kite shield, an elf ranger with a longbow, a bearded wizard with a staff, a dwarf with a hand cannon, a frost druid, a cleric with a glowing mace) defending a castle wall against a tide of colourful cute slimes and a big ogre carrying a cauldron, bright saturated colours, thick outlines, dynamic composition, no text.",
+      "source": "art/source/splash.png",
+      "output": "public/assets/ui/splash.webp",
+      "size": [1920, 1080]
+    }
+  ]
+}

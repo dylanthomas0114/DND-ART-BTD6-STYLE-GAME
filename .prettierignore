@@ -1,0 +1,15 @@
+dist
+dist-*
+android
+ios
+node_modules
+package-lock.json
+src/audio/zzfx.ts
+public/assets/maps
+public/sw.js
+art/source
+coverage
+test-results
+playwright-report
+art/guides
+art/icon
