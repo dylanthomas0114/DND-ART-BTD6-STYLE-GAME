@@ -116,23 +116,37 @@ export interface EnemyLook {
 }
 
 /**
+ * Whether layers get their own colour and immunity mark. Off by request: every skeleton looks like
+ * its chassis (sword-and-shield or archer) and the layers differ only by size. Flip to `true` to
+ * bring back the colour ladder and the shadow/frost/ward/iron/storm/prism/stone marks below.
+ */
+export const SHOW_LAYER_STYLE = false;
+
+const look = (chassis: EnemyChassis, height: number, tint: number, mark?: EnemyMark): EnemyLook => ({
+  chassis,
+  height,
+  tint: SHOW_LAYER_STYLE ? tint : 0xffffff,
+  ...(SHOW_LAYER_STYLE && mark ? { mark } : {}),
+});
+
+/**
  * Regular enemies as skeletons. Warriors (sword and shield) are the main line; archers carry the
- * magical and immune layers. Layer colour follows the old slime ladder so players keep their
- * muscle memory; size grows with the layer too.
+ * magical and immune layers. When `SHOW_LAYER_STYLE` is on, layer colour follows the old slime
+ * ladder so players keep their muscle memory; size grows with the layer either way.
  */
 export const ENEMY_LOOKS: Partial<Record<string, EnemyLook>> = {
-  green: { chassis: 'skeleton_warrior', height: 56, tint: 0xdbf7c6 },
-  blue: { chassis: 'skeleton_warrior', height: 58, tint: 0xb8deff },
-  amber: { chassis: 'skeleton_warrior', height: 60, tint: 0xffe1a0 },
-  violet: { chassis: 'skeleton_warrior', height: 63, tint: 0xdec1ff },
-  crimson: { chassis: 'skeleton_warrior', height: 65, tint: 0xffb0b0 },
-  shadow: { chassis: 'skeleton_archer', height: 60, tint: 0xc4b7de, mark: 'shadow' },
-  frost: { chassis: 'skeleton_archer', height: 60, tint: 0xe7f7ff, mark: 'frost' },
-  warded: { chassis: 'skeleton_archer', height: 63, tint: 0xe7cfff, mark: 'ward' },
-  iron: { chassis: 'skeleton_warrior', height: 65, tint: 0xd6dae0, mark: 'iron' },
-  storm: { chassis: 'skeleton_archer', height: 63, tint: 0xf4f4f4, mark: 'bolt' },
-  prismatic: { chassis: 'skeleton_archer', height: 65, tint: 0xffa0d0, mark: 'prism' },
-  stone: { chassis: 'skeleton_warrior', height: 72, tint: 0xd9d6cf, mark: 'stone' },
+  green: look('skeleton_warrior', 56, 0xdbf7c6),
+  blue: look('skeleton_warrior', 58, 0xb8deff),
+  amber: look('skeleton_warrior', 60, 0xffe1a0),
+  violet: look('skeleton_warrior', 63, 0xdec1ff),
+  crimson: look('skeleton_warrior', 65, 0xffb0b0),
+  shadow: look('skeleton_archer', 60, 0xc4b7de, 'shadow'),
+  frost: look('skeleton_archer', 60, 0xe7f7ff, 'frost'),
+  warded: look('skeleton_archer', 63, 0xe7cfff, 'ward'),
+  iron: look('skeleton_warrior', 65, 0xd6dae0, 'iron'),
+  storm: look('skeleton_archer', 63, 0xf4f4f4, 'bolt'),
+  prismatic: look('skeleton_archer', 65, 0xffa0d0, 'prism'),
+  stone: look('skeleton_warrior', 72, 0xd9d6cf, 'stone'),
 };
 
 /** Arrows were painted pointing up-right at ~44 degrees; this turns them to point along +x. */

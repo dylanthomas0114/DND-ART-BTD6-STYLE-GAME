@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ENEMIES } from '../../src/core/data/enemies';
-import { ENEMY_LOOKS, PAINTED_CHASSIS } from '../../src/render/art/painted';
+import { ENEMY_LOOKS, PAINTED_CHASSIS, SHOW_LAYER_STYLE } from '../../src/render/art/painted';
 import { cyclesPerSecond, hueTint, mulTint, stepBob, walkFrame } from '../../src/render/walkCycle';
 
 describe('walk cycle', () => {
@@ -51,9 +51,26 @@ describe('painted enemy looks', () => {
     }
   });
 
-  it('keeps layer colours distinct so tiers stay readable', () => {
-    const tints = Object.values(ENEMY_LOOKS).map((l) => l!.tint);
-    expect(new Set(tints).size).toBe(tints.length);
+  it('keeps layer colours distinct when layer styling is on, and plain when it is off', () => {
+    const looks = Object.values(ENEMY_LOOKS) as NonNullable<(typeof ENEMY_LOOKS)[string]>[];
+    if (SHOW_LAYER_STYLE) {
+      const tints = looks.map((l) => l.tint);
+      expect(new Set(tints).size).toBe(tints.length);
+    } else {
+      for (const l of looks) {
+        expect(l.tint).toBe(0xffffff);
+        expect(l.mark).toBeUndefined();
+      }
+    }
+  });
+
+  it('still grows with the layer so size is the remaining tier cue', () => {
+    const h = (id: string): number => ENEMY_LOOKS[id]!.height;
+    expect(h('green')).toBeLessThan(h('blue'));
+    expect(h('blue')).toBeLessThan(h('amber'));
+    expect(h('amber')).toBeLessThan(h('violet'));
+    expect(h('violet')).toBeLessThan(h('crimson'));
+    expect(h('crimson')).toBeLessThan(h('stone'));
   });
 });
 
