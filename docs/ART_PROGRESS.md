@@ -107,3 +107,7 @@ Chromium on swiftshader (software GL), 915x412 @ DPR 2, 150 skeleton walkers (al
 ## Measurements (baseline, 915×412 CSS @ DPR 2, `?demo=glade`)
 
 - Towers ≈ 100-130 device px tall incl. gear (~50-65 CSS px); enemies far smaller. Painted bake target for tower body ≈ 128-160 px tall frames; enemy ≈ 64-80 px. Baseline screenshot: `test-results/baseline_glade.png`.
+
+## Gemini prompt pack
+
+`docs/GEMINI_PROMPTS.md`: master style block plus per-subject prompts for the enemies (troll, giant, lich, dragon, whelp regen, skeleton warrior and archer regen), every character (master pose, 6-frame attack, 8-frame idle and special) and the 11 companions. Not yet run in Gemini; independent review was cut off by a spend limit, so treat it as unreviewed. Save outputs to `art/spike/<name>` and record each in `art/PROVENANCE.md`.
